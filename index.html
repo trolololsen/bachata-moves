@@ -1,58 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Move Library</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta charset="UTF-8" />
+  <title>Video Library</title>
   <link rel="stylesheet" href="styles.css">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/app.js" defer></script>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-left">
-    <h1>Move Library</h1>
-    <a href="upload.html" class="nav-link">+ Add Move</a>
-  </div>
+<header class="top-header">
+  <h1>Video Library</h1>
 
   <div class="header-right">
-    <input type="text" id="search" placeholder="Search by name">
+    <input type="text" id="searchInput" placeholder="Search by name...">
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" style="display:none;">Logout</button>
+    <a href="upload.html" class="nav-link">Upload</a>
   </div>
 </header>
 
-<main class="container">
+<div id="videoList"></div>
 
-  <div class="filters">
-
-    <div class="filter-row">
-      <label for="filterType">Type</label>
-      <select id="filterType"></select>
-    </div>
-
-    <div class="filter-row">
-      <label for="filterStart">Start</label>
-      <select id="filterStart"></select>
-    </div>
-
-    <div class="filter-row">
-      <label for="filterEnd">End</label>
-      <select id="filterEnd"></select>
-    </div>
-
-    <div class="filter-row">
-      <label for="filterDifficulty">Difficulty</label>
-      <select id="filterDifficulty"></select>
-    </div>
-
-  </div>
-
-  <div id="movesContainer"></div>
-
-</main>
-
+<script src="config.js"></script>
+<script src="main.js"></script>
 </body>
 </html>

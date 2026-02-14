@@ -1,116 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Add Move</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta charset="UTF-8" />
+  <title>Upload Video</title>
   <link rel="stylesheet" href="styles.css">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/upload.js" defer></script>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-left">
-    <h1>Add Move</h1>
-    <a href="index.html" class="nav-link secondary">← Back to Library</a>
+<header class="top-header">
+  <h1>Upload Video</h1>
+  <div class="header-right">
+    <a href="index.html" class="nav-link">Home</a>
+    <button id="logoutBtn">Logout</button>
   </div>
 </header>
 
-<main class="container">
+<div class="upload-container">
 
   <div class="form-row">
-    <label for="name">Name</label>
-    <input type="text" id="name">
+    <label>Title:</label>
+    <input type="text" id="title">
   </div>
 
   <div class="form-row">
-    <label for="type">Type</label>
-    <select id="type">
-      <option value="">Select</option>
-      <option>Move</option>
-      <option>Entry</option>
-      <option>Exit</option>
-      <option>Transition</option>
-      <option>Combo</option>
-      <option>Styling</option>
-    </select>
+    <label>Video File:</label>
+    <input type="file" id="videoFile">
   </div>
 
   <div class="form-row">
-    <label for="start_position">Start</label>
-    <select id="start_position">
-      <option value="">Select</option>
-      <option>Open</option>
-      <option>Closed</option>
-      <option>Cross Body</option>
-      <option>Side-by-Side</option>
-      <option>Shadow</option>
-      <option>Hammerlock</option>
-      <option>Double Hand Hold</option>
-      <option>Single Hand Hold</option>
-      <option>Wrap</option>
-      <option>Reverse Wrap</option>
-      <option>Sweetheart</option>
-      <option>Cradle</option>
-      <option>Headloop</option>
-      <option>Pretzel</option>
-      <option>Cuddle</option>
-    </select>
+    <input type="checkbox" id="copyrightAgree">
+    <label for="copyrightAgree">
+      I confirm that I own this video or have full legal rights to upload it.
+    </label>
   </div>
 
-  <div class="form-row">
-    <label for="end_position">End</label>
-    <select id="end_position">
-      <option value="">Select</option>
-      <option>Open</option>
-      <option>Closed</option>
-      <option>Cross Body</option>
-      <option>Side-by-Side</option>
-      <option>Shadow</option>
-      <option>Hammerlock</option>
-      <option>Double Hand Hold</option>
-      <option>Single Hand Hold</option>
-      <option>Wrap</option>
-      <option>Reverse Wrap</option>
-      <option>Sweetheart</option>
-      <option>Cradle</option>
-      <option>Headloop</option>
-      <option>Pretzel</option>
-      <option>Cuddle</option>
-    </select>
-  </div>
-
-  <div class="form-row">
-    <label for="difficulty">Difficulty</label>
-    <select id="difficulty">
-      <option value="">Select</option>
-      <option>Beginner</option>
-      <option>Improver</option>
-      <option>Intermediate</option>
-      <option>Advanced</option>
-      <option>Professional</option>
-    </select>
-  </div>
-
-  <div class="form-row">
-    <label for="comment">Comment</label>
-    <input type="text" id="comment">
-  </div>
-
-  <div class="form-row">
-    <label for="videoFile">Video</label>
-    <input type="file" id="videoFile" accept="video/*">
-  </div>
-
-  <button id="uploadBtn" class="primary-btn">Upload Move</button>
+  <button id="uploadBtn">Upload</button>
 
   <p id="status"></p>
 
-</main>
+</div>
 
+<script src="config.js"></script>
+<script src="upload.js"></script>
 </body>
 </html>

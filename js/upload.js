@@ -1,23 +1,42 @@
-document.getElementById("uploadBtn").addEventListener("click", async () => {
+const uploadBtn = document.getElementById("uploadBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const status = document.getElementById("status");
 
-  const status = document.getElementById("status");
+async function requireLogin() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-  const name = document.getElementById("name").value.trim();
-  const type = document.getElementById("type").value;
-  const startPosition = document.getElementById("start_position").value;
-  const endPosition = document.getElementById("end_position").value;
-  const difficulty = document.getElementById("difficulty").value;
-  const comment = document.getElementById("comment").value.trim();
+  if (!user) {
+    alert("You must be logged in to upload.");
+    window.location.href = "index.html";
+  }
+
+  return user;
+}
+
+logoutBtn.addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  window.location.href = "index.html";
+});
+
+uploadBtn.addEventListener("click", async () => {
+
+  const user = await requireLogin();
+
+  const title = document.getElementById("title").value;
   const file = document.getElementById("videoFile").files[0];
+  const agree = document.getElementById("copyrightAgree").checked;
 
-  if (!name || !type || !startPosition || !endPosition || !difficulty || !file) {
-    status.innerText = "Please fill all required fields and select a video.";
+  if (!title || !file) {
+    status.innerText = "Title and file required.";
     return;
   }
 
-  status.innerText = "Uploading video...";
+  if (!agree) {
+    status.innerText = "You must confirm upload rights.";
+    return;
+  }
 
-  const fileName = Date.now() + "-" + file.name.replace(/\s+/g, "_");
+  const fileName = `${Date.now()}_${file.name}`;
 
   const { error: uploadError } = await supabaseClient
     .storage
@@ -25,35 +44,29 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     .upload(fileName, file);
 
   if (uploadError) {
-    status.innerText = "Video upload failed: " + uploadError.message;
+    status.innerText = uploadError.message;
     return;
   }
 
-  const { data: publicData } = supabaseClient
+  const { data: publicUrl } = supabaseClient
     .storage
     .from("videos")
     .getPublicUrl(fileName);
 
-  const videoUrl = publicData.publicUrl;
-
-  status.innerText = "Saving move to database...";
-
   const { error: dbError } = await supabaseClient
-    .from("moves")
-    .insert({
-      name: name,
-      type: type,
-      start_position: startPosition,
-      end_position: endPosition,
-      difficulty: difficulty,
-      video_url: videoUrl,
-      comment: comment
-    });
+    .from("videos")
+    .insert([
+      {
+        title: title,
+        url: publicUrl.publicUrl,
+        uploader_id: user.id
+      }
+    ]);
 
   if (dbError) {
-    status.innerText = "Database error: " + dbError.message;
+    status.innerText = dbError.message;
     return;
   }
 
-  status.innerText = "Move added successfully!";
+  status.innerText = "Upload successful.";
 });
