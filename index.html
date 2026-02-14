@@ -1,74 +1,65 @@
-const searchInput = document.getElementById("searchInput");
-const positionSelect = document.getElementById("positionSelect");
-const moveTypeSelect = document.getElementById("moveTypeSelect");
-const difficultySelect = document.getElementById("difficultySelect");
-const videoList = document.getElementById("videoList");
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bachata Moves Library</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
 
-// Load all videos from Supabase
-async function loadVideos() {
-  const { data, error } = await supabaseClient
-    .from("videos")
-    .select("*");
+<header class="top-header">
+  <h1>Bachata Moves Library</h1>
+  <nav>
+    <a href="upload.html">Upload Video</a>
+  </nav>
+</header>
 
-  if (error) {
-    videoList.innerText = "Error loading videos.";
-    console.error(error);
-    return;
-  }
+<main>
+  <!-- Filters -->
+  <div class="filters">
+    <div class="form-row">
+      <label for="searchInput">Search by Name:</label>
+      <input type="text" id="searchInput" placeholder="Move name">
+    </div>
+    <div class="form-row">
+      <label for="positionSelect">Start Position:</label>
+      <select id="positionSelect">
+        <option value="">All</option>
+        <option value="open">Open</option>
+        <option value="closed">Closed</option>
+        <option value="side-by-side">Side by Side</option>
+        <option value="cross-body">Cross-Body</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="moveTypeSelect">Type:</label>
+      <select id="moveTypeSelect">
+        <option value="">All</option>
+        <option value="move">Move</option>
+        <option value="entry">Entry</option>
+        <option value="exit">Exit</option>
+        <option value="transition">Transition</option>
+        <option value="combo">Combo</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="difficultySelect">Difficulty:</label>
+      <select id="difficultySelect">
+        <option value="">All</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+  </div>
 
-  window.allVideos = data; // keep a copy for filtering
-  renderVideos(data);
-}
+  <!-- Video list -->
+  <div id="videoList" class="video-list"></div>
+</main>
 
-// Filter function
-function filterVideos() {
-  let filtered = window.allVideos || [];
-
-  const searchValue = searchInput.value.toLowerCase();
-  const positionValue = positionSelect.value;
-  const typeValue = moveTypeSelect.value;
-  const difficultyValue = difficultySelect.value;
-
-  filtered = filtered.filter(v => {
-    return (
-      (!searchValue || v.title.toLowerCase().includes(searchValue)) &&
-      (!positionValue || v.start_position === positionValue) &&
-      (!typeValue || v.type === typeValue) &&
-      (!difficultyValue || v.difficulty === difficultyValue)
-    );
-  });
-
-  renderVideos(filtered);
-}
-
-// Render video cards
-function renderVideos(videos) {
-  videoList.innerHTML = "";
-  if (!videos.length) {
-    videoList.innerText = "No moves found.";
-    return;
-  }
-
-  videos.forEach(video => {
-    const div = document.createElement("div");
-    div.className = "video-card";
-    div.innerHTML = `
-      <h3>${video.title}</h3>
-      <p>${video.comment || ""}</p>
-      <p>Position: ${video.start_position} | Type: ${video.type} | Difficulty: ${video.difficulty}</p>
-      <video controls width="100%">
-        <source src="${video.url}" type="video/mp4">
-      </video>
-    `;
-    videoList.appendChild(div);
-  });
-}
-
-// Event listeners
-searchInput.addEventListener("input", filterVideos);
-positionSelect.addEventListener("change", filterVideos);
-moveTypeSelect.addEventListener("change", filterVideos);
-difficultySelect.addEventListener("change", filterVideos);
-
-// Initialize
-loadVideos();
+<script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
