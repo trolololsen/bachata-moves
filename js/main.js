@@ -9,18 +9,20 @@ async function checkUser() {
   if (user) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
+  } else {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
   }
 }
 
-loginBtn?.addEventListener("click", async () => {
-  const email = prompt("Enter email:");
+loginBtn.addEventListener("click", async () => {
+  const email = prompt("Enter your email:");
   if (!email) return;
-
   await supabaseClient.auth.signInWithOtp({ email });
   alert("Check your email for login link.");
 });
 
-logoutBtn?.addEventListener("click", async () => {
+logoutBtn.addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
   location.reload();
 });
@@ -32,6 +34,7 @@ async function loadVideos() {
 
   if (error) {
     console.error(error);
+    videoList.innerText = "Error loading videos.";
     return;
   }
 
@@ -40,7 +43,6 @@ async function loadVideos() {
 
 function renderVideos(videos) {
   videoList.innerHTML = "";
-
   videos.forEach(video => {
     const div = document.createElement("div");
     div.className = "video-card";
@@ -54,15 +56,15 @@ function renderVideos(videos) {
   });
 }
 
-searchInput?.addEventListener("input", async () => {
+searchInput.addEventListener("input", async () => {
   const value = searchInput.value;
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("videos")
     .select("*")
     .ilike("title", `%${value}%`);
 
-  renderVideos(data);
+  if (!error) renderVideos(data);
 });
 
 checkUser();

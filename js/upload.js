@@ -44,7 +44,7 @@ uploadBtn.addEventListener("click", async () => {
     .upload(fileName, file);
 
   if (uploadError) {
-    status.innerText = uploadError.message;
+    status.innerText = "Upload failed: " + uploadError.message;
     return;
   }
 
@@ -64,9 +64,12 @@ uploadBtn.addEventListener("click", async () => {
     ]);
 
   if (dbError) {
-    status.innerText = dbError.message;
+    status.innerText = "Database insert failed: " + dbError.message;
     return;
   }
 
-  status.innerText = "Upload successful.";
+  status.innerText = "Upload successful!";
+  document.getElementById("title").value = "";
+  document.getElementById("videoFile").value = "";
+  document.getElementById("copyrightAgree").checked = false;
 });

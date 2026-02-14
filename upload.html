@@ -10,36 +10,35 @@
 
 <header class="top-header">
   <h1>Upload Video</h1>
-  <div class="header-right">
-    <a href="index.html" class="nav-link">Home</a>
+  <nav>
+    <a href="index.html">Home</a>
     <button id="logoutBtn">Logout</button>
-  </div>
+  </nav>
 </header>
 
-<div class="upload-container">
+<main>
+  <div class="upload-container">
+    <div class="form-row">
+      <label for="title">Title:</label>
+      <input type="text" id="title">
+    </div>
 
-  <div class="form-row">
-    <label>Title:</label>
-    <input type="text" id="title">
+    <div class="form-row">
+      <label for="videoFile">Video File:</label>
+      <input type="file" id="videoFile">
+    </div>
+
+    <div class="form-row">
+      <input type="checkbox" id="copyrightAgree">
+      <label for="copyrightAgree">
+        I confirm that I own this video or have full legal rights to upload it.
+      </label>
+    </div>
+
+    <button id="uploadBtn">Upload</button>
+    <p id="status"></p>
   </div>
-
-  <div class="form-row">
-    <label>Video File:</label>
-    <input type="file" id="videoFile">
-  </div>
-
-  <div class="form-row">
-    <input type="checkbox" id="copyrightAgree">
-    <label for="copyrightAgree">
-      I confirm that I own this video or have full legal rights to upload it.
-    </label>
-  </div>
-
-  <button id="uploadBtn">Upload</button>
-
-  <p id="status"></p>
-
-</div>
+</main>
 
 <script src="config.js"></script>
 <script src="upload.js"></script>
