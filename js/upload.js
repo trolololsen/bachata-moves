@@ -1,75 +1,74 @@
-const uploadBtn = document.getElementById("uploadBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const status = document.getElementById("status");
+const searchInput = document.getElementById("searchInput");
+const positionSelect = document.getElementById("positionSelect");
+const moveTypeSelect = document.getElementById("moveTypeSelect");
+const difficultySelect = document.getElementById("difficultySelect");
+const videoList = document.getElementById("videoList");
 
-async function requireLogin() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
+// Load all videos
+async function loadVideos() {
+  const { data, error } = await supabaseClient
+    .from("videos")
+    .select("*");
 
-  if (!user) {
-    alert("You must be logged in to upload.");
-    window.location.href = "index.html";
+  if (error) {
+    videoList.innerText = "Error loading videos.";
+    console.error(error);
+    return;
   }
 
-  return user;
+  window.allVideos = data;
+  renderVideos(data);
 }
 
-logoutBtn.addEventListener("click", async () => {
-  await supabaseClient.auth.signOut();
-  window.location.href = "index.html";
-});
+// Filter videos
+function filterVideos() {
+  let filtered = window.allVideos || [];
 
-uploadBtn.addEventListener("click", async () => {
+  const searchValue = searchInput.value.toLowerCase();
+  const positionValue = positionSelect.value;
+  const typeValue = moveTypeSelect.value;
+  const difficultyValue = difficultySelect.value;
 
-  const user = await requireLogin();
+  filtered = filtered.filter(v => {
+    return (
+      (!searchValue || v.title.toLowerCase().includes(searchValue)) &&
+      (!positionValue || v.start_position === positionValue) &&
+      (!typeValue || v.type === typeValue) &&
+      (!difficultyValue || v.difficulty === difficultyValue)
+    );
+  });
 
-  const title = document.getElementById("title").value;
-  const file = document.getElementById("videoFile").files[0];
-  const agree = document.getElementById("copyrightAgree").checked;
+  renderVideos(filtered);
+}
 
-  if (!title || !file) {
-    status.innerText = "Title and file required.";
+// Render video cards
+function renderVideos(videos) {
+  videoList.innerHTML = "";
+  if (!videos.length) {
+    videoList.innerText = "No moves found.";
     return;
   }
 
-  if (!agree) {
-    status.innerText = "You must confirm upload rights.";
-    return;
-  }
+  videos.forEach(video => {
+    const div = document.createElement("div");
+    div.className = "video-card";
+    div.innerHTML = `
+      <h3>${video.title}</h3>
+      <p>${video.comment || ""}</p>
+      <p>Position: ${video.start_position} | Type: ${video.type} | Difficulty: ${video.difficulty}</p>
+      <video controls width="100%">
+        <source src="${video.url}" type="video/mp4">
+      </video>
+    `;
+    videoList.appendChild(div);
+  });
+}
 
-  const fileName = `${Date.now()}_${file.name}`;
+// Event listeners
+searchInput.addEventListener("input", filterVideos);
+positionSelect.addEventListener("change", filterVideos);
+moveTypeSelect.addEventListener("change", filterVideos);
+difficultySelect.addEventListener("change", filterVideos);
 
-  const { error: uploadError } = await supabaseClient
-    .storage
-    .from("videos")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    status.innerText = "Upload failed: " + uploadError.message;
-    return;
-  }
-
-  const { data: publicUrl } = supabaseClient
-    .storage
-    .from("videos")
-    .getPublicUrl(fileName);
-
-  const { error: dbError } = await supabaseClient
-    .from("videos")
-    .insert([
-      {
-        title: title,
-        url: publicUrl.publicUrl,
-        uploader_id: user.id
-      }
-    ]);
-
-  if (dbError) {
-    status.innerText = "Database insert failed: " + dbError.message;
-    return;
-  }
-
-  status.innerText = "Upload successful!";
-  document.getElementById("title").value = "";
-  document.getElementById("videoFile").value = "";
-  document.getElementById("copyrightAgree").checked = false;
-});
+// Initialize
+loadVideos();

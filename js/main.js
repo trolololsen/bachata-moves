@@ -4,7 +4,7 @@ const moveTypeSelect = document.getElementById("moveTypeSelect");
 const difficultySelect = document.getElementById("difficultySelect");
 const videoList = document.getElementById("videoList");
 
-// Load all videos from Supabase
+// Load all videos
 async function loadVideos() {
   const { data, error } = await supabaseClient
     .from("videos")
@@ -16,11 +16,11 @@ async function loadVideos() {
     return;
   }
 
-  window.allVideos = data; // keep a copy for filtering
+  window.allVideos = data;
   renderVideos(data);
 }
 
-// Filter function
+// Filter videos
 function filterVideos() {
   let filtered = window.allVideos || [];
 

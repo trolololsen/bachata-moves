@@ -21,7 +21,7 @@ body {
   border-radius: 4px;
 }
 
-.upload-container, .video-list {
+.filters, .upload-container, .video-list {
   padding: 20px;
 }
 
@@ -32,11 +32,12 @@ body {
 }
 
 .form-row label {
-  width: 120px;
+  width: 130px;
 }
 
 .form-row input[type="text"],
-.form-row input[type="file"] {
+.form-row input[type="file"],
+.form-row select {
   flex: 1;
 }
 
