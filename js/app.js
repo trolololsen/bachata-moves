@@ -1,64 +1,91 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Bachata Moves Library</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
+const searchInput = document.getElementById("searchInput");
+const startPositionSelect = document.getElementById("startPositionSelect");
+const endPositionSelect = document.getElementById("endPositionSelect");
+const moveTypeSelect = document.getElementById("moveTypeSelect");
+const difficultySelect = document.getElementById("difficultySelect");
+const videoList = document.getElementById("videoList");
 
-<header class="top-header">
-  <h1>Bachata Moves Library</h1>
-  <nav>
-    <a href="upload.html">Upload Video</a>
-  </nav>
-</header>
+const positions = [
+  "open", "closed", "side-by-side", "cross-body", "underarm-turn",
+  "inside-turn", "outside-turn", "cuddle", "shadow", "promenade",
+  "fan", "back-spot", "slot", "line", "tango-close", "hammerlock",
+  "spiral", "wrap", "body-wave", "other"
+];
 
-<main>
-  <div class="filters">
-    <div class="form-row">
-      <label for="searchInput">Search by Name:</label>
-      <input type="text" id="searchInput" placeholder="Move name">
-    </div>
+function populatePositions() {
+  positions.forEach(p => {
+    const option1 = document.createElement("option");
+    option1.value = p; option1.text = p;
+    startPositionSelect.appendChild(option1);
 
-    <div class="form-row">
-      <label for="startPositionSelect">Start Position:</label>
-      <select id="startPositionSelect"></select>
-    </div>
+    const option2 = document.createElement("option");
+    option2.value = p; option2.text = p;
+    endPositionSelect.appendChild(option2);
+  });
+}
 
-    <div class="form-row">
-      <label for="endPositionSelect">End Position:</label>
-      <select id="endPositionSelect"></select>
-    </div>
+async function loadVideos() {
+  const { data, error } = await supabaseClient
+    .from("moves")
+    .select("*");
 
-    <div class="form-row">
-      <label for="moveTypeSelect">Type:</label>
-      <select id="moveTypeSelect">
-        <option value="">All</option>
-        <option value="move">Move</option>
-        <option value="entry">Entry</option>
-        <option value="exit">Exit</option>
-        <option value="transition">Transition</option>
-        <option value="combo">Combo</option>
-      </select>
-    </div>
+  if (error) {
+    videoList.innerText = "Error loading videos.";
+    console.error(error);
+    return;
+  }
 
-    <div class="form-row">
-      <label for="difficultySelect">Difficulty:</label>
-      <select id="difficultySelect">
-        <option value="">All</option>
-        <option value="beginner">Beginner</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
-    </div>
-  </div>
+  window.allVideos = data;
+  renderVideos(data);
+}
 
-  <div id="videoList" class="video-list"></div>
-</main>
+function filterVideos() {
+  const searchVal = searchInput.value.toLowerCase();
+  const startVal = startPositionSelect.value;
+  const endVal = endPositionSelect.value;
+  const typeVal = moveTypeSelect.value;
+  const diffVal = difficultySelect.value;
 
-<script src="config.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+  const filtered = (window.allVideos || []).filter(v => {
+    return (!searchVal || v.name.toLowerCase().includes(searchVal)) &&
+           (!startVal || v.start_position === startVal) &&
+           (!endVal || v.end_position === endVal) &&
+           (!typeVal || v.type === typeVal) &&
+           (!diffVal || v.difficulty === diffVal);
+  });
+
+  renderVideos(filtered);
+}
+
+function renderVideos(videos) {
+  videoList.innerHTML = "";
+  if (!videos.length) {
+    videoList.innerText = "No moves found.";
+    return;
+  }
+
+  videos.forEach(v => {
+    const div = document.createElement("div");
+    div.className = "video-card";
+    div.innerHTML = `
+      <h3>${v.name}</h3>
+      <p>${v.comment || ""}</p>
+      <p>Start: ${v.start_position} | End: ${v.end_position} | Type: ${v.type} | Difficulty: ${v.difficulty}</p>
+      <video controls width="100%">
+        <source src="${v.video_url}" type="video/mp4">
+      </video>
+    `;
+    videoList.appendChild(div);
+  });
+}
+
+// Event listeners
+searchInput.addEventListener("input", filterVideos);
+startPositionSelect.addEventListener("change", filterVideos);
+endPositionSelect.addEventListener("change", filterVideos);
+moveTypeSelect.addEventListener("change", filterVideos);
+difficultySelect.addEventListener("change", filterVideos);
+
+// Initialize
+populatePositions();
+loadVideos();
