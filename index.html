@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Move Library</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Move Library</h2>
+
+  <div class="filters">
+    <div class="form-group">
+      <label for="filterType">Type</label>
+      <select id="filterType"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="filterStart">Start Position</label>
+      <select id="filterStart"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="filterEnd">End Position</label>
+      <select id="filterEnd"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="filterDifficulty">Difficulty</label>
+      <select id="filterDifficulty"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="search">Search by Name</label>
+      <input type="text" id="search" placeholder="Search by name">
+    </div>
+  </div>
+
+  <div id="movesContainer"></div>
+</div>
+
+</body>
+</html>

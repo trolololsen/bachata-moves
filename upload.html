@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Add New Move</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/upload.js" defer></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Add New Move</h2>
+
+  <div class="form-group">
+    <label for="name">Move Name</label>
+    <input type="text" id="name" placeholder="Enter move name">
+  </div>
+
+  <div class="form-group">
+    <label for="type">Type</label>
+    <select id="type">
+      <option value="">Select Type</option>
+      <option>Move</option>
+      <option>Entry</option>
+      <option>Exit</option>
+      <option>Transition</option>
+      <option>Combo</option>
+      <option>Styling</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="start_position">Start Position</label>
+    <select id="start_position">
+      <option value="">Select Start Position</option>
+      <option>Open</option>
+      <option>Closed</option>
+      <option>Cross Body</option>
+      <option>Side-by-Side</option>
+      <option>Shadow</option>
+      <option>Hammerlock</option>
+      <option>Double Hand Hold</option>
+      <option>Single Hand Hold</option>
+      <option>Wrap</option>
+      <option>Reverse Wrap</option>
+      <option>Sweetheart</option>
+      <option>Cradle</option>
+      <option>Headloop</option>
+      <option>Pretzel</option>
+      <option>Cuddle</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="end_position">End Position</label>
+    <select id="end_position">
+      <option value="">Select End Position</option>
+      <option>Open</option>
+      <option>Closed</option>
+      <option>Cross Body</option>
+      <option>Side-by-Side</option>
+      <option>Shadow</option>
+      <option>Hammerlock</option>
+      <option>Double Hand Hold</option>
+      <option>Single Hand Hold</option>
+      <option>Wrap</option>
+      <option>Reverse Wrap</option>
+      <option>Sweetheart</option>
+      <option>Cradle</option>
+      <option>Headloop</option>
+      <option>Pretzel</option>
+      <option>Cuddle</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="difficulty">Difficulty</label>
+    <select id="difficulty">
+      <option value="">Select Difficulty</option>
+      <option>Beginner</option>
+      <option>Improver</option>
+      <option>Intermediate</option>
+      <option>Advanced</option>
+      <option>Professional</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="comment">Comment / Hint</label>
+    <input type="text" id="comment" placeholder="Optional hint or note">
+  </div>
+
+  <div class="form-group">
+    <label for="videoFile">Upload Video</label>
+    <input type="file" id="videoFile" accept="video/*">
+  </div>
+
+  <button id="uploadBtn">Upload Move</button>
+
+  <p id="status"></p>
+</div>
+
+</body>
+</html>
