@@ -1,53 +1,61 @@
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
 const searchInput = document.getElementById("searchInput");
+const positionSelect = document.getElementById("positionSelect");
+const moveTypeSelect = document.getElementById("moveTypeSelect");
+const difficultySelect = document.getElementById("difficultySelect");
 const videoList = document.getElementById("videoList");
 
-async function checkUser() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-
-  if (user) {
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
-  } else {
-    loginBtn.style.display = "inline-block";
-    logoutBtn.style.display = "none";
-  }
-}
-
-loginBtn.addEventListener("click", async () => {
-  const email = prompt("Enter your email:");
-  if (!email) return;
-  await supabaseClient.auth.signInWithOtp({ email });
-  alert("Check your email for login link.");
-});
-
-logoutBtn.addEventListener("click", async () => {
-  await supabaseClient.auth.signOut();
-  location.reload();
-});
-
+// Load all videos from Supabase
 async function loadVideos() {
   const { data, error } = await supabaseClient
     .from("videos")
     .select("*");
 
   if (error) {
-    console.error(error);
     videoList.innerText = "Error loading videos.";
+    console.error(error);
     return;
   }
 
+  window.allVideos = data; // keep a copy for filtering
   renderVideos(data);
 }
 
+// Filter function
+function filterVideos() {
+  let filtered = window.allVideos || [];
+
+  const searchValue = searchInput.value.toLowerCase();
+  const positionValue = positionSelect.value;
+  const typeValue = moveTypeSelect.value;
+  const difficultyValue = difficultySelect.value;
+
+  filtered = filtered.filter(v => {
+    return (
+      (!searchValue || v.title.toLowerCase().includes(searchValue)) &&
+      (!positionValue || v.start_position === positionValue) &&
+      (!typeValue || v.type === typeValue) &&
+      (!difficultyValue || v.difficulty === difficultyValue)
+    );
+  });
+
+  renderVideos(filtered);
+}
+
+// Render video cards
 function renderVideos(videos) {
   videoList.innerHTML = "";
+  if (!videos.length) {
+    videoList.innerText = "No moves found.";
+    return;
+  }
+
   videos.forEach(video => {
     const div = document.createElement("div");
     div.className = "video-card";
     div.innerHTML = `
       <h3>${video.title}</h3>
+      <p>${video.comment || ""}</p>
+      <p>Position: ${video.start_position} | Type: ${video.type} | Difficulty: ${video.difficulty}</p>
       <video controls width="100%">
         <source src="${video.url}" type="video/mp4">
       </video>
@@ -56,16 +64,11 @@ function renderVideos(videos) {
   });
 }
 
-searchInput.addEventListener("input", async () => {
-  const value = searchInput.value;
+// Event listeners
+searchInput.addEventListener("input", filterVideos);
+positionSelect.addEventListener("change", filterVideos);
+moveTypeSelect.addEventListener("change", filterVideos);
+difficultySelect.addEventListener("change", filterVideos);
 
-  const { data, error } = await supabaseClient
-    .from("videos")
-    .select("*")
-    .ilike("title", `%${value}%`);
-
-  if (!error) renderVideos(data);
-});
-
-checkUser();
+// Initialize
 loadVideos();

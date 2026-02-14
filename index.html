@@ -1,25 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Video Library</title>
+  <meta charset="UTF-8">
+  <title>Bachata Moves Library</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <header class="top-header">
-  <h1>Video Library</h1>
+  <h1>Bachata Moves Library</h1>
   <nav>
-    <a href="index.html">Home</a>
-    <a href="upload.html">Upload</a>
-    <input type="text" id="searchInput" placeholder="Search by name...">
-    <button id="loginBtn">Login</button>
-    <button id="logoutBtn" style="display:none;">Logout</button>
+    <a href="upload.html">Upload Video</a>
   </nav>
 </header>
 
 <main>
+  <!-- Filters -->
+  <div class="filters">
+    <div class="form-row">
+      <label for="searchInput">Search by Name:</label>
+      <input type="text" id="searchInput" placeholder="Move name">
+    </div>
+    <div class="form-row">
+      <label for="positionSelect">Start Position:</label>
+      <select id="positionSelect">
+        <option value="">All</option>
+        <option value="open">Open</option>
+        <option value="closed">Closed</option>
+        <option value="side-by-side">Side by Side</option>
+        <!-- Add all positions -->
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="moveTypeSelect">Type:</label>
+      <select id="moveTypeSelect">
+        <option value="">All</option>
+        <option value="move">Move</option>
+        <option value="entry">Entry</option>
+        <option value="exit">Exit</option>
+        <option value="transition">Transition</option>
+        <option value="combo">Combo</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="difficultySelect">Difficulty:</label>
+      <select id="difficultySelect">
+        <option value="">All</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Video list -->
   <div id="videoList" class="video-list"></div>
 </main>
 
