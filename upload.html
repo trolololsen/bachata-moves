@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Add New Move</title>
+  <title>Add Move</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="styles.css">
@@ -13,22 +13,24 @@
 </head>
 <body>
 
-<div class="container">
+<header class="header">
+  <div class="header-left">
+    <h1>Add Move</h1>
+    <a href="index.html" class="nav-link secondary">← Back to Library</a>
+  </div>
+</header>
 
-  <div class="top-nav">
-    <h2>Add New Move</h2>
-    <a href="index.html" class="nav-button secondary">← Back to Library</a>
+<main class="container">
+
+  <div class="form-row">
+    <label for="name">Name</label>
+    <input type="text" id="name">
   </div>
 
-  <div class="form-group">
-    <label for="name">Move Name</label>
-    <input type="text" id="name" placeholder="Enter move name">
-  </div>
-
-  <div class="form-group">
+  <div class="form-row">
     <label for="type">Type</label>
     <select id="type">
-      <option value="">Select Type</option>
+      <option value="">Select</option>
       <option>Move</option>
       <option>Entry</option>
       <option>Exit</option>
@@ -38,10 +40,10 @@
     </select>
   </div>
 
-  <div class="form-group">
-    <label for="start_position">Start Position</label>
+  <div class="form-row">
+    <label for="start_position">Start</label>
     <select id="start_position">
-      <option value="">Select Start Position</option>
+      <option value="">Select</option>
       <option>Open</option>
       <option>Closed</option>
       <option>Cross Body</option>
@@ -60,10 +62,10 @@
     </select>
   </div>
 
-  <div class="form-group">
-    <label for="end_position">End Position</label>
+  <div class="form-row">
+    <label for="end_position">End</label>
     <select id="end_position">
-      <option value="">Select End Position</option>
+      <option value="">Select</option>
       <option>Open</option>
       <option>Closed</option>
       <option>Cross Body</option>
@@ -82,10 +84,10 @@
     </select>
   </div>
 
-  <div class="form-group">
+  <div class="form-row">
     <label for="difficulty">Difficulty</label>
     <select id="difficulty">
-      <option value="">Select Difficulty</option>
+      <option value="">Select</option>
       <option>Beginner</option>
       <option>Improver</option>
       <option>Intermediate</option>
@@ -94,21 +96,21 @@
     </select>
   </div>
 
-  <div class="form-group">
-    <label for="comment">Comment / Hint</label>
-    <input type="text" id="comment" placeholder="Optional hint or note">
+  <div class="form-row">
+    <label for="comment">Comment</label>
+    <input type="text" id="comment">
   </div>
 
-  <div class="form-group">
-    <label for="videoFile">Upload Video</label>
+  <div class="form-row">
+    <label for="videoFile">Video</label>
     <input type="file" id="videoFile" accept="video/*">
   </div>
 
-  <button id="uploadBtn">Upload Move</button>
+  <button id="uploadBtn" class="primary-btn">Upload Move</button>
 
   <p id="status"></p>
 
-</div>
+</main>
 
 </body>
 </html>
