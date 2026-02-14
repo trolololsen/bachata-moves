@@ -1,78 +1,64 @@
-const movesContainer = document.getElementById("movesContainer");
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bachata Moves Library</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
 
-const positions = [
-  "Open","Closed","Cross Body","Side-by-Side","Shadow",
-  "Hammerlock","Double Hand Hold","Single Hand Hold",
-  "Wrap","Reverse Wrap","Sweetheart","Cradle",
-  "Headloop","Pretzel","Cuddle"
-];
+<header class="top-header">
+  <h1>Bachata Moves Library</h1>
+  <nav>
+    <a href="upload.html">Upload Video</a>
+  </nav>
+</header>
 
-const types = ["Move","Entry","Exit","Transition","Combo","Styling"];
-const difficulties = ["Beginner","Improver","Intermediate","Advanced","Professional"];
+<main>
+  <div class="filters">
+    <div class="form-row">
+      <label for="searchInput">Search by Name:</label>
+      <input type="text" id="searchInput" placeholder="Move name">
+    </div>
 
-function populateSelect(id, values) {
-  const select = document.getElementById(id);
-  select.innerHTML = `<option value="">All</option>`;
-  values.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v;
-    select.appendChild(opt);
-  });
-}
+    <div class="form-row">
+      <label for="startPositionSelect">Start Position:</label>
+      <select id="startPositionSelect"></select>
+    </div>
 
-populateSelect("filterType", types);
-populateSelect("filterStart", positions);
-populateSelect("filterEnd", positions);
-populateSelect("filterDifficulty", difficulties);
+    <div class="form-row">
+      <label for="endPositionSelect">End Position:</label>
+      <select id="endPositionSelect"></select>
+    </div>
 
-async function loadMoves() {
+    <div class="form-row">
+      <label for="moveTypeSelect">Type:</label>
+      <select id="moveTypeSelect">
+        <option value="">All</option>
+        <option value="move">Move</option>
+        <option value="entry">Entry</option>
+        <option value="exit">Exit</option>
+        <option value="transition">Transition</option>
+        <option value="combo">Combo</option>
+      </select>
+    </div>
 
-  const { data, error } = await supabaseClient
-    .from("moves")
-    .select("*")
-    .order("created_at", { ascending: false });
+    <div class="form-row">
+      <label for="difficultySelect">Difficulty:</label>
+      <select id="difficultySelect">
+        <option value="">All</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+  </div>
 
-  if (error) return;
+  <div id="videoList" class="video-list"></div>
+</main>
 
-  renderMoves(data);
-}
-
-function renderMoves(moves) {
-  const search = document.getElementById("search").value.toLowerCase();
-  const type = document.getElementById("filterType").value;
-  const start = document.getElementById("filterStart").value;
-  const end = document.getElementById("filterEnd").value;
-  const difficulty = document.getElementById("filterDifficulty").value;
-
-  movesContainer.innerHTML = "";
-
-  moves
-    .filter(m =>
-      (!type || m.type === type) &&
-      (!start || m.start_position === start) &&
-      (!end || m.end_position === end) &&
-      (!difficulty || m.difficulty === difficulty) &&
-      m.name.toLowerCase().includes(search)
-    )
-    .forEach(m => {
-
-      const div = document.createElement("div");
-
-      div.innerHTML = `
-        <h3>${m.name}</h3>
-        <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
-        <video src="${m.video_url}" controls width="300"></video>
-      `;
-
-      movesContainer.appendChild(div);
-    });
-}
-
-document.getElementById("search").addEventListener("input", loadMoves);
-document.getElementById("filterType").addEventListener("change", loadMoves);
-document.getElementById("filterStart").addEventListener("change", loadMoves);
-document.getElementById("filterEnd").addEventListener("change", loadMoves);
-document.getElementById("filterDifficulty").addEventListener("change", loadMoves);
-
-loadMoves();
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

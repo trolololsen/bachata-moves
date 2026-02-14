@@ -16,23 +16,22 @@
 </header>
 
 <main>
-  <!-- Filters -->
   <div class="filters">
     <div class="form-row">
       <label for="searchInput">Search by Name:</label>
       <input type="text" id="searchInput" placeholder="Move name">
     </div>
+
     <div class="form-row">
-      <label for="positionSelect">Start Position:</label>
-      <select id="positionSelect">
-        <option value="">All</option>
-        <option value="open">Open</option>
-        <option value="closed">Closed</option>
-        <option value="side-by-side">Side by Side</option>
-        <option value="cross-body">Cross-Body</option>
-        <option value="other">Other</option>
-      </select>
+      <label for="startPositionSelect">Start Position:</label>
+      <select id="startPositionSelect"></select>
     </div>
+
+    <div class="form-row">
+      <label for="endPositionSelect">End Position:</label>
+      <select id="endPositionSelect"></select>
+    </div>
+
     <div class="form-row">
       <label for="moveTypeSelect">Type:</label>
       <select id="moveTypeSelect">
@@ -44,6 +43,7 @@
         <option value="combo">Combo</option>
       </select>
     </div>
+
     <div class="form-row">
       <label for="difficultySelect">Difficulty:</label>
       <select id="difficultySelect">
@@ -55,11 +55,10 @@
     </div>
   </div>
 
-  <!-- Video list -->
   <div id="videoList" class="video-list"></div>
 </main>
 
 <script src="config.js"></script>
-<script src="main.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

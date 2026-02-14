@@ -1,74 +1,84 @@
-const searchInput = document.getElementById("searchInput");
-const positionSelect = document.getElementById("positionSelect");
-const moveTypeSelect = document.getElementById("moveTypeSelect");
-const difficultySelect = document.getElementById("difficultySelect");
-const videoList = document.getElementById("videoList");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const status = document.getElementById("status");
 
-// Load all videos
-async function loadVideos() {
-  const { data, error } = await supabaseClient
+async function checkUser() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (user) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+  } else {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+  }
+  return user;
+}
+
+loginBtn.addEventListener("click", async () => {
+  const email = prompt("Enter your email:");
+  if (!email) return;
+  await supabaseClient.auth.signInWithOtp({ email });
+  alert("Check your email for login link.");
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  location.reload();
+});
+
+async function requireLogin() {
+  const user = await checkUser();
+  if (!user) {
+    alert("You must login to upload.");
+    return null;
+  }
+  return user;
+}
+
+uploadBtn.addEventListener("click", async () => {
+  const user = await requireLogin();
+  if (!user) return;
+
+  const title = document.getElementById("title").value;
+  const file = document.getElementById("videoFile").files[0];
+  const agree = document.getElementById("copyrightAgree").checked;
+
+  if (!title || !file) { status.innerText = "Title and file required."; return; }
+  if (!agree) { status.innerText = "You must confirm upload rights."; return; }
+
+  const fileName = `${Date.now()}_${file.name}`;
+
+  const { error: uploadError } = await supabaseClient
+    .storage
     .from("videos")
-    .select("*");
+    .upload(fileName, file);
 
-  if (error) {
-    videoList.innerText = "Error loading videos.";
-    console.error(error);
+  if (uploadError) {
+    status.innerText = "Upload failed: " + uploadError.message;
     return;
   }
 
-  window.allVideos = data;
-  renderVideos(data);
-}
+  const { data: publicUrl } = supabaseClient
+    .storage
+    .from("videos")
+    .getPublicUrl(fileName);
 
-// Filter videos
-function filterVideos() {
-  let filtered = window.allVideos || [];
+  const { error: dbError } = await supabaseClient
+    .from("moves")
+    .insert([{
+      name: title,
+      video_url: publicUrl.publicUrl,
+      uploader_id: user.id
+    }]);
 
-  const searchValue = searchInput.value.toLowerCase();
-  const positionValue = positionSelect.value;
-  const typeValue = moveTypeSelect.value;
-  const difficultyValue = difficultySelect.value;
-
-  filtered = filtered.filter(v => {
-    return (
-      (!searchValue || v.title.toLowerCase().includes(searchValue)) &&
-      (!positionValue || v.start_position === positionValue) &&
-      (!typeValue || v.type === typeValue) &&
-      (!difficultyValue || v.difficulty === difficultyValue)
-    );
-  });
-
-  renderVideos(filtered);
-}
-
-// Render video cards
-function renderVideos(videos) {
-  videoList.innerHTML = "";
-  if (!videos.length) {
-    videoList.innerText = "No moves found.";
+  if (dbError) {
+    status.innerText = "DB insert failed: " + dbError.message;
     return;
   }
 
-  videos.forEach(video => {
-    const div = document.createElement("div");
-    div.className = "video-card";
-    div.innerHTML = `
-      <h3>${video.title}</h3>
-      <p>${video.comment || ""}</p>
-      <p>Position: ${video.start_position} | Type: ${video.type} | Difficulty: ${video.difficulty}</p>
-      <video controls width="100%">
-        <source src="${video.url}" type="video/mp4">
-      </video>
-    `;
-    videoList.appendChild(div);
-  });
-}
-
-// Event listeners
-searchInput.addEventListener("input", filterVideos);
-positionSelect.addEventListener("change", filterVideos);
-moveTypeSelect.addEventListener("change", filterVideos);
-difficultySelect.addEventListener("change", filterVideos);
-
-// Initialize
-loadVideos();
+  status.innerText = "Upload successful!";
+  document.getElementById("title").value = "";
+  document.getElementById("videoFile").value = "";
+  document.getElementById("copyrightAgree").checked = false;
+});
