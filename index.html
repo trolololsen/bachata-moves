@@ -13,43 +13,46 @@
 </head>
 <body>
 
-<div class="container">
-
-  <div class="top-nav">
-    <h2>Move Library</h2>
-    <a href="upload.html" class="nav-button">+ Add New Move</a>
+<header class="header">
+  <div class="header-left">
+    <h1>Move Library</h1>
+    <a href="upload.html" class="nav-link">+ Add Move</a>
   </div>
 
+  <div class="header-right">
+    <input type="text" id="search" placeholder="Search by name">
+  </div>
+</header>
+
+<main class="container">
+
   <div class="filters">
-    <div class="form-group">
+
+    <div class="filter-row">
       <label for="filterType">Type</label>
       <select id="filterType"></select>
     </div>
 
-    <div class="form-group">
-      <label for="filterStart">Start Position</label>
+    <div class="filter-row">
+      <label for="filterStart">Start</label>
       <select id="filterStart"></select>
     </div>
 
-    <div class="form-group">
-      <label for="filterEnd">End Position</label>
+    <div class="filter-row">
+      <label for="filterEnd">End</label>
       <select id="filterEnd"></select>
     </div>
 
-    <div class="form-group">
+    <div class="filter-row">
       <label for="filterDifficulty">Difficulty</label>
       <select id="filterDifficulty"></select>
     </div>
 
-    <div class="form-group">
-      <label for="search">Search by Name</label>
-      <input type="text" id="search" placeholder="Search by name">
-    </div>
   </div>
 
   <div id="movesContainer"></div>
 
-</div>
+</main>
 
 </body>
 </html>
