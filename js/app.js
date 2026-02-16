@@ -26,6 +26,12 @@ const positions = [
 const types = ["Move", "Entry", "Exit", "Transition", "Combo", "Styling"];
 const difficulties = ["Beginner", "Improver", "Intermediate", "Advanced", "Professional"];
 
+function setElementText(el, text) {
+  if (el) {
+    el.textContent = text;
+  }
+}
+
 function normalizeTier(value) {
   const tier = (value || "").toString().toLowerCase();
 
@@ -71,33 +77,38 @@ async function getUserTier(user) {
 }
 
 function setAuthStatus(message, tone = "info") {
+  if (!authStatus) return;
+
   authStatus.textContent = message || "";
   authStatus.classList.remove("error", "success", "info");
+
   if (message) {
     authStatus.classList.add(tone);
   }
 }
 
 function mapSignInError(error) {
-  const msg = (error?.message || '').toLowerCase();
+  const msg = (error?.message || "").toLowerCase();
 
-  if (msg.includes('email not confirmed')) {
-    return 'Sign-in failed: email is not confirmed yet. Confirm in your inbox or mark the user confirmed in Supabase Auth.';
+  if (msg.includes("email not confirmed")) {
+    return "Sign-in failed: email is not confirmed yet. Confirm in your inbox or mark the user confirmed in Supabase Auth.";
   }
 
-  if (msg.includes('invalid login credentials') || msg.includes('invalid_grant')) {
-    return 'Sign-in failed: wrong email/password, or user is not created. Create/confirm user in Supabase Auth Users first.';
+  if (msg.includes("invalid login credentials") || msg.includes("invalid_grant")) {
+    return "Sign-in failed: wrong email/password, or user is not created. Create/confirm user in Supabase Auth Users first.";
   }
 
-  if (msg.includes('signup is disabled')) {
-    return 'Sign-in failed: email/password auth is disabled in Supabase Auth settings.';
+  if (msg.includes("signup is disabled")) {
+    return "Sign-in failed: email/password auth is disabled in Supabase Auth settings.";
   }
 
-  return `Sign-in failed: ${error?.message || 'Unknown error'}`;
+  return `Sign-in failed: ${error?.message || "Unknown error"}`;
 }
 
 function populateSelect(id, values) {
   const select = document.getElementById(id);
+  if (!select) return;
+
   select.innerHTML = `<option value="">All</option>`;
   values.forEach(v => {
     const opt = document.createElement("option");
@@ -110,9 +121,7 @@ function populateSelect(id, values) {
 function dedupeAddMoveLinks() {
   const links = document.querySelectorAll('.header-left a[href="upload.html"]');
   links.forEach((link, index) => {
-    if (index > 0) {
-      link.remove();
-    }
+    if (index > 0) link.remove();
   });
 }
 
@@ -128,42 +137,50 @@ function getTierFilteredMoves(moves) {
 
 function updateTierUI() {
   dedupeAddMoveLinks();
-  addMoveLink.classList.toggle("hidden", currentTier !== "pro");
+
+  if (addMoveLink) {
+    addMoveLink.classList.toggle("hidden", currentTier !== "pro");
+  }
 
   if (!currentUser) {
-    accessMessage.textContent = "Signed out: thumbnails are blurred and videos are locked. Sign in to unlock playback.";
+    setElementText(accessMessage, "Signed out: thumbnails are blurred and videos are locked. Sign in to unlock playback.");
     return;
   }
 
   if (currentTier === "basic") {
-    accessMessage.textContent = "Basic access: Beginner videos unlocked.";
+    setElementText(accessMessage, "Basic access: Beginner videos unlocked.");
     return;
   }
 
   if (currentTier === "normal") {
-    accessMessage.textContent = "Normal access: all move content unlocked.";
+    setElementText(accessMessage, "Normal access: all move content unlocked.");
     return;
   }
 
-  accessMessage.textContent = "Pro access: all content and uploads enabled.";
+  setElementText(accessMessage, "Pro access: all content and uploads enabled.");
 }
 
 function updateAuthUI() {
   const signedIn = Boolean(currentUser);
-  authForm.classList.toggle("hidden", signedIn);
-  signOutBtn.classList.toggle("hidden", !signedIn);
+
+  if (authForm) authForm.classList.toggle("hidden", signedIn);
+  if (signOutBtn) signOutBtn.classList.toggle("hidden", !signedIn);
 
   if (signedIn) {
-    authUserInfo.textContent = `${currentUser.email} · ${currentTier.toUpperCase()}`;
+    setElementText(authUserInfo, `${currentUser.email} · ${currentTier.toUpperCase()}`);
   } else {
-    authUserInfo.textContent = "Signed out";
-    if (!authStatus.textContent) setAuthStatus("Please sign in to unlock your tier.", "info");
+    setElementText(authUserInfo, "Signed out");
+    if (!authStatus?.textContent) {
+      setAuthStatus("Please sign in to unlock your tier.", "info");
+    }
   }
 
   updateTierUI();
 }
 
 async function loadMoves() {
+  if (!movesContainer) return;
+
   const { data, error } = await supabaseClient
     .from("moves")
     .select("*")
@@ -179,11 +196,16 @@ async function loadMoves() {
 }
 
 function renderMoves() {
-  const search = document.getElementById("search").value.toLowerCase();
-  const type = document.getElementById("filterType").value;
-  const start = document.getElementById("filterStart").value;
-  const end = document.getElementById("filterEnd").value;
-  const difficulty = document.getElementById("filterDifficulty").value;
+  if (!movesContainer) {
+    console.error("renderMoves aborted: #movesContainer is missing in the page.");
+    return;
+  }
+
+  const search = (document.getElementById("search")?.value || "").toLowerCase();
+  const type = document.getElementById("filterType")?.value || "";
+  const start = document.getElementById("filterStart")?.value || "";
+  const end = document.getElementById("filterEnd")?.value || "";
+  const difficulty = document.getElementById("filterDifficulty")?.value || "";
   const requiresLoginToPlay = !currentUser;
 
   movesContainer.innerHTML = "";
@@ -211,7 +233,7 @@ function renderMoves() {
       <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
       <div class="video-wrap ${requiresLoginToPlay ? "locked" : ""}">
         <video src="${m.video_url}" ${requiresLoginToPlay ? 'preload="metadata" muted playsinline tabindex="-1"' : 'controls'} width="300"></video>
-        ${requiresLoginToPlay ? '<div class="locked-overlay">Sign in to play</div>' : ''}
+        ${requiresLoginToPlay ? '<div class="locked-overlay">Sign in to play</div>' : ""}
       </div>
     `;
 
@@ -231,34 +253,38 @@ async function handleAuthState(session) {
   renderMoves();
 }
 
-authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  setAuthStatus("Signing in...", "info");
+if (authForm) {
+  authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setAuthStatus("Signing in...", "info");
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: authEmail.value.trim(),
-    password: authPassword.value
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: authEmail?.value.trim(),
+      password: authPassword?.value
+    });
+
+    setAuthStatus(error ? mapSignInError(error) : "Signed in successfully.", error ? "error" : "success");
+
+    if (!error) {
+      if (authPassword) authPassword.value = "";
+      const { data } = await supabaseClient.auth.getSession();
+      await handleAuthState(data.session);
+    }
   });
+}
 
-  setAuthStatus(error ? mapSignInError(error) : "Signed in successfully.", error ? "error" : "success");
+if (signOutBtn) {
+  signOutBtn.addEventListener("click", async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    setAuthStatus(error ? `Sign-out failed: ${error.message}` : "Signed out.", error ? "error" : "info");
+  });
+}
 
-  if (!error) {
-    authPassword.value = "";
-    const { data } = await supabaseClient.auth.getSession();
-    await handleAuthState(data.session);
-  }
-});
-
-signOutBtn.addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut();
-  setAuthStatus(error ? `Sign-out failed: ${error.message}` : "Signed out.", error ? "error" : "info");
-});
-
-document.getElementById("search").addEventListener("input", renderMoves);
-document.getElementById("filterType").addEventListener("change", renderMoves);
-document.getElementById("filterStart").addEventListener("change", renderMoves);
-document.getElementById("filterEnd").addEventListener("change", renderMoves);
-document.getElementById("filterDifficulty").addEventListener("change", renderMoves);
+document.getElementById("search")?.addEventListener("input", renderMoves);
+document.getElementById("filterType")?.addEventListener("change", renderMoves);
+document.getElementById("filterStart")?.addEventListener("change", renderMoves);
+document.getElementById("filterEnd")?.addEventListener("change", renderMoves);
+document.getElementById("filterDifficulty")?.addEventListener("change", renderMoves);
 
 populateSelect("filterType", types);
 populateSelect("filterStart", positions);
