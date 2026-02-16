@@ -78,6 +78,24 @@ function setAuthStatus(message, tone = "info") {
   }
 }
 
+function mapSignInError(error) {
+  const msg = (error?.message || '').toLowerCase();
+
+  if (msg.includes('email not confirmed')) {
+    return 'Sign-in failed: email is not confirmed yet. Confirm in your inbox or mark the user confirmed in Supabase Auth.';
+  }
+
+  if (msg.includes('invalid login credentials') || msg.includes('invalid_grant')) {
+    return 'Sign-in failed: wrong email/password, or user is not created. Create/confirm user in Supabase Auth Users first.';
+  }
+
+  if (msg.includes('signup is disabled')) {
+    return 'Sign-in failed: email/password auth is disabled in Supabase Auth settings.';
+  }
+
+  return `Sign-in failed: ${error?.message || 'Unknown error'}`;
+}
+
 function populateSelect(id, values) {
   const select = document.getElementById(id);
   select.innerHTML = `<option value="">All</option>`;
@@ -222,7 +240,7 @@ authForm.addEventListener("submit", async (event) => {
     password: authPassword.value
   });
 
-  setAuthStatus(error ? `Sign-in failed: ${error.message}` : "Signed in successfully.", error ? "error" : "success");
+  setAuthStatus(error ? mapSignInError(error) : "Signed in successfully.", error ? "error" : "success");
 
   if (!error) {
     authPassword.value = "";
