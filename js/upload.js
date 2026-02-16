@@ -103,9 +103,15 @@ if (uploadBtn) {
     const difficulty = document.getElementById("difficulty")?.value;
     const comment = document.getElementById("comment")?.value.trim();
     const file = document.getElementById("videoFile")?.files?.[0];
+    const copyrightConfirmed = document.getElementById("copyrightConfirm")?.checked;
 
     if (!name || !type || !startPosition || !endPosition || !difficulty || !file) {
       setElementText(status, "Please fill all required fields and select a video.");
+      return;
+    }
+
+    if (!copyrightConfirmed) {
+      setElementText(status, "Please confirm you have rights to upload this video.");
       return;
     }
 

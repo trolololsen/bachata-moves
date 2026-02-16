@@ -238,6 +238,12 @@ body {
   color: #555;
 }
 
+.move-comment {
+  font-style: italic;
+  color: #374151;
+  min-height: 1.2em;
+}
+
 .video-wrap {
   position: relative;
   border-radius: 8px;
@@ -285,6 +291,19 @@ body {
 .favorite-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.upload-disclaimer {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+
+.upload-disclaimer p {
+  margin: 0 0 6px 0;
 }
 
 @media (max-width: 600px) {

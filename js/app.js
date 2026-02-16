@@ -306,10 +306,11 @@ function renderMoves() {
     div.innerHTML = `
       <h3>${m.name}</h3>
       <p>${m.normalized_type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
+      <p class="move-comment">${m.comment || ""}</p>
       <p>Uploaded by: ${getUploaderLabel(m)}</p>
       <div class="video-wrap ${canPlay ? "" : "locked"}">
         ${canPlay
-          ? `<video src="${m.video_url}" controls width="300" preload="metadata" playsinline></video>`
+          ? `<video src="${m.video_url}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture width="300" preload="metadata" playsinline oncontextmenu="return false;"></video>`
           : `<div class="locked-preview">Sign in to play</div>`}
       </div>
       <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"}>
