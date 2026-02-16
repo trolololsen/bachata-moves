@@ -1,6 +1,87 @@
 document.getElementById("uploadBtn").addEventListener("click", async () => {
+const uploadAccessMessage = document.getElementById("uploadAccessMessage");
+const uploadFormSection = document.getElementById("uploadFormSection");
+const authUserInfo = document.getElementById("authUserInfo");
+const signOutBtn = document.getElementById("signOutBtn");
+const status = document.getElementById("status");
+
+let currentUser = null;
+let currentTier = "basic";
+
+function normalizeTier(value) {
+  const tier = (value || "").toString().toLowerCase();
+
+  if (["pro", "premium"].includes(tier)) {
+    return "pro";
+  }
+
+  if (["normal", "plus", "standard"].includes(tier)) {
+    return "normal";
+  }
+
+  return "basic";
+}
+
+async function getUserTier(user) {
+  if (!user) return "basic";
+
+  const fromMetadata = normalizeTier(
+    user.user_metadata?.tier
+    || user.user_metadata?.plan
+    || user.app_metadata?.tier
+    || user.app_metadata?.plan
+  );
+
+  if (fromMetadata !== "basic") return fromMetadata;
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!error && data?.tier) {
+    return normalizeTier(data.tier);
+  }
+
+  return "basic";
+}
+
+function updateAccessUI() {
+  signOutBtn.classList.toggle("hidden", !currentUser);
+
+  if (!currentUser) {
+    authUserInfo.textContent = "No active session";
+    uploadAccessMessage.textContent = "Please sign in first. Only Pro users can upload.";
+    uploadFormSection.classList.add("hidden");
+    return;
+  }
+
+  authUserInfo.textContent = `${currentUser.email} · ${currentTier.toUpperCase()}`;
 
   const status = document.getElementById("status");
+  if (currentTier !== "pro") {
+    uploadAccessMessage.textContent = "Uploads are only available for Pro access.";
+    uploadFormSection.classList.add("hidden");
+    return;
+  }
+
+  uploadAccessMessage.textContent = "Pro access confirmed. You can upload moves.";
+  uploadFormSection.classList.remove("hidden");
+}
+
+async function refreshAuthState() {
+  const { data } = await supabaseClient.auth.getSession();
+  currentUser = data.session?.user || null;
+  currentTier = await getUserTier(currentUser);
+  updateAccessUI();
+}
+
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  if (!currentUser || currentTier !== "pro") {
+    status.innerText = "Upload blocked: Pro access is required.";
+    return;
+  }
 
   const name = document.getElementById("name").value.trim();
   const type = document.getElementById("type").value;
@@ -26,12 +107,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 
   if (uploadError) {
     status.innerText = "Video upload failed: " + uploadError.message;
-    return;
-  }
-
-  const { data: publicData } = supabaseClient
-    .storage
-    .from("videos")
+@@ -35,25 +114,38 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     .getPublicUrl(fileName);
 
   const videoUrl = publicData.publicUrl;
@@ -57,3 +133,16 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 
   status.innerText = "Move added successfully!";
 });
+
+signOutBtn.addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    uploadAccessMessage.textContent = error.message;
+  }
+});
+
+supabaseClient.auth.onAuthStateChange(() => {
+  refreshAuthState();
+});
+
+refreshAuthState();
