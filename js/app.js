@@ -32,6 +32,20 @@ function setElementText(el, text) {
   }
 }
 
+function ensureMovesContainer() {
+  if (movesContainer) return movesContainer;
+
+  const existing = document.getElementById("movesContainer");
+  if (existing) return existing;
+
+  const container = document.querySelector("main.container") || document.body;
+  const fallback = document.createElement("div");
+  fallback.id = "movesContainer";
+  container.appendChild(fallback);
+  console.warn("#movesContainer was missing and has been created automatically.");
+  return fallback;
+}
+
 function normalizeTier(value) {
   const tier = (value || "").toString().toLowerCase();
 
@@ -179,7 +193,7 @@ function updateAuthUI() {
 }
 
 async function loadMoves() {
-  if (!movesContainer) return;
+  const targetContainer = ensureMovesContainer();
 
   const { data, error } = await supabaseClient
     .from("moves")
@@ -187,7 +201,7 @@ async function loadMoves() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    movesContainer.innerHTML = `<p>${error.message}</p>`;
+    targetContainer.innerHTML = `<p>${error.message}</p>`;
     return;
   }
 
@@ -196,10 +210,7 @@ async function loadMoves() {
 }
 
 function renderMoves() {
-  if (!movesContainer) {
-    console.error("renderMoves aborted: #movesContainer is missing in the page.");
-    return;
-  }
+  const targetContainer = ensureMovesContainer();
 
   const search = (document.getElementById("search")?.value || "").toLowerCase();
   const type = document.getElementById("filterType")?.value || "";
@@ -208,7 +219,7 @@ function renderMoves() {
   const difficulty = document.getElementById("filterDifficulty")?.value || "";
   const requiresLoginToPlay = !currentUser;
 
-  movesContainer.innerHTML = "";
+  targetContainer.innerHTML = "";
 
   const visibleMoves = getTierFilteredMoves(allMoves)
     .filter(m =>
@@ -220,7 +231,7 @@ function renderMoves() {
     );
 
   if (!visibleMoves.length) {
-    movesContainer.innerHTML = "<p>No moves match your current filters/access level.</p>";
+    targetContainer.innerHTML = "<p>No moves match your current filters/access level.</p>";
     return;
   }
 
@@ -237,7 +248,7 @@ function renderMoves() {
       </div>
     `;
 
-    movesContainer.appendChild(div);
+    targetContainer.appendChild(div);
   });
 }
 
