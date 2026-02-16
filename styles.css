@@ -90,8 +90,22 @@ body {
 }
 
 .status-text {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   margin: 6px 0 0;
+  color: #e5e7eb;
+  min-height: 1.1em;
+}
+
+.status-text.info {
+  color: #e5e7eb;
+}
+
+.status-text.success {
+  color: #86efac;
+}
+
+.status-text.error {
+  color: #fca5a5;
 }
 
 .secondary-btn {
@@ -145,7 +159,7 @@ body {
 
 .filter-row label {
   font-size: 0.85rem;
-@@ -152,26 +220,44 @@ body {
+@@ -152,26 +234,44 @@ body {
 }
 
 /* MOBILE */

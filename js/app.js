@@ -64,11 +64,25 @@ async function getUserTier(user) {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!error && data?.tier) {
+  if (error) {
+    console.error("Profile tier lookup failed:", error.message);
+    return "basic";
+  }
+
+  if (data?.tier) {
     return normalizeTier(data.tier);
   }
 
   return "basic";
+}
+
+
+function setAuthStatus(message, tone = "info") {
+  authStatus.textContent = message || "";
+  authStatus.classList.remove("error", "success", "info");
+  if (message) {
+    authStatus.classList.add(tone);
+  }
 }
 
 function populateSelect(id, values) {
@@ -138,6 +152,7 @@ function updateAuthUI() {
     authUserInfo.textContent = `${currentUser.email} · ${currentTier.toUpperCase()}`;
   } else {
     authUserInfo.textContent = "Signed out";
+    if (!authStatus.textContent) setAuthStatus("Please sign in to unlock your tier.", "info");
   }
 
   updateTierUI();
@@ -182,37 +197,30 @@ function renderMoves() {
     .forEach(m => {
     );
 
-      const div = document.createElement("div");
   if (!visibleMoves.length) {
     movesContainer.innerHTML = "<p>No moves match your current filters/access level.</p>";
     return;
   }
+
+      const div = document.createElement("div");
+  visibleMoves.forEach(m => {
+    const div = document.createElement("div");
 
       div.innerHTML = `
         <h3>${m.name}</h3>
         <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
         <video src="${m.video_url}" controls width="300"></video>
       `;
-  visibleMoves.forEach(m => {
-    const div = document.createElement("div");
-
     div.innerHTML = `
       <h3>${m.name}</h3>
       <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
       <video src="${m.video_url}" controls width="300"></video>
     `;
 
-    movesContainer.appendChild(div);
-  });
-}
-
       movesContainer.appendChild(div);
     });
-async function handleAuthState(session) {
-  currentUser = session?.user || null;
-  currentTier = await getUserTier(currentUser);
-  updateAuthUI();
-  renderMoves();
+    movesContainer.appendChild(div);
+  });
 }
 
 document.getElementById("search").addEventListener("input", loadMoves);
@@ -220,25 +228,39 @@ document.getElementById("filterType").addEventListener("change", loadMoves);
 document.getElementById("filterStart").addEventListener("change", loadMoves);
 document.getElementById("filterEnd").addEventListener("change", loadMoves);
 document.getElementById("filterDifficulty").addEventListener("change", loadMoves);
+async function handleAuthState(session) {
+  currentUser = session?.user || null;
+  currentTier = await getUserTier(currentUser);
+  updateAuthUI();
+
+  if (currentUser) {
+    setAuthStatus(`Logged in as ${currentUser.email}.`, "success");
+  }
+
+  renderMoves();
+}
+
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  authStatus.textContent = "Signing in...";
+  setAuthStatus("Signing in...", "info");
 
   const { error } = await supabaseClient.auth.signInWithPassword({
     email: authEmail.value.trim(),
     password: authPassword.value
   });
 
-  authStatus.textContent = error ? error.message : "Signed in.";
+  setAuthStatus(error ? `Sign-in failed: ${error.message}` : "Signed in successfully.", error ? "error" : "success");
 
   if (!error) {
     authPassword.value = "";
+    const { data } = await supabaseClient.auth.getSession();
+    await handleAuthState(data.session);
   }
 });
 
 signOutBtn.addEventListener("click", async () => {
   const { error } = await supabaseClient.auth.signOut();
-  authStatus.textContent = error ? error.message : "Signed out.";
+  setAuthStatus(error ? `Sign-out failed: ${error.message}` : "Signed out.", error ? "error" : "info");
 });
 
 document.getElementById("search").addEventListener("input", renderMoves);
