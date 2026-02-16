@@ -105,12 +105,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 
   if (uploadError) {
     status.innerText = "Video upload failed: " + uploadError.message;
-    return;
-  }
-
-  const { data: publicData } = supabaseClient
-    .storage
-    .from("videos")
+@@ -35,25 +114,38 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     .getPublicUrl(fileName);
 
   const videoUrl = publicData.publicUrl;

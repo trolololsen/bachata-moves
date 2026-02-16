@@ -159,55 +159,7 @@ body {
 
 .filter-row label {
   font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.filter-row select {
-  padding: 5px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 0.85rem;
-}
-
-/* FORM */
-
-.form-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.form-row label {
-  width: 110px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.form-row input,
-.form-row select {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 0.9rem;
-}
-
-.primary-btn {
-  background: #3b82f6;
-  color: white;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.primary-btn:hover {
-  opacity: 0.9;
-}
-
-/* MOVE CARDS */
-
+@@ -129,49 +211,100 @@ body {
 #movesContainer {
   display: flex;
   flex-wrap: wrap;
@@ -231,6 +183,39 @@ body {
   margin: 0 0 6px 0;
   font-size: 0.85rem;
   color: #555;
+}
+
+
+.move-card {
+  position: relative;
+}
+
+.video-wrap {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-wrap video {
+  display: block;
+  width: 100%;
+}
+
+.video-wrap.locked video {
+  filter: blur(8px) saturate(0.7);
+  pointer-events: none;
+}
+
+.locked-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.55);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 /* MOBILE */

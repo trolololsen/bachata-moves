@@ -9,7 +9,7 @@ const signOutBtn = document.getElementById("signOutBtn");
 const authStatus = document.getElementById("authStatus");
 const authUserInfo = document.getElementById("authUserInfo");
 
-const BASIC_VISIBLE_DIFFICULTIES = ["Beginner", "Improver"];
+const BASIC_VISIBLE_DIFFICULTIES = ["Beginner"];
 const BASIC_MAX_MOVES = 12;
 
 let currentUser = null;
@@ -70,7 +70,6 @@ async function getUserTier(user) {
   return "basic";
 }
 
-
 function setAuthStatus(message, tone = "info") {
   authStatus.textContent = message || "";
   authStatus.classList.remove("error", "success", "info");
@@ -90,7 +89,6 @@ function populateSelect(id, values) {
   });
 }
 
-
 function dedupeAddMoveLinks() {
   const links = document.querySelectorAll('.header-left a[href="upload.html"]');
   links.forEach((link, index) => {
@@ -101,7 +99,7 @@ function dedupeAddMoveLinks() {
 }
 
 function getTierFilteredMoves(moves) {
-  if (currentTier === "basic") {
+  if (!currentUser || currentTier === "basic") {
     return moves
       .filter(m => BASIC_VISIBLE_DIFFICULTIES.includes(m.difficulty))
       .slice(0, BASIC_MAX_MOVES);
@@ -115,12 +113,12 @@ function updateTierUI() {
   addMoveLink.classList.toggle("hidden", currentTier !== "pro");
 
   if (!currentUser) {
-    accessMessage.textContent = "Signed out: Basic access active. Sign in for more content.";
+    accessMessage.textContent = "Signed out: thumbnails are blurred and videos are locked. Sign in to unlock playback.";
     return;
   }
 
   if (currentTier === "basic") {
-    accessMessage.textContent = "Basic access: limited move list and only Beginner/Improver levels.";
+    accessMessage.textContent = "Basic access: Beginner videos unlocked.";
     return;
   }
 
@@ -168,6 +166,7 @@ function renderMoves() {
   const start = document.getElementById("filterStart").value;
   const end = document.getElementById("filterEnd").value;
   const difficulty = document.getElementById("filterDifficulty").value;
+  const requiresLoginToPlay = !currentUser;
 
   movesContainer.innerHTML = "";
 
@@ -187,11 +186,15 @@ function renderMoves() {
 
   visibleMoves.forEach(m => {
     const div = document.createElement("div");
+    div.className = "move-card";
 
     div.innerHTML = `
       <h3>${m.name}</h3>
       <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
-      <video src="${m.video_url}" controls width="300"></video>
+      <div class="video-wrap ${requiresLoginToPlay ? "locked" : ""}">
+        <video src="${m.video_url}" ${requiresLoginToPlay ? 'preload="metadata" muted playsinline tabindex="-1"' : 'controls'} width="300"></video>
+        ${requiresLoginToPlay ? '<div class="locked-overlay">Sign in to play</div>' : ''}
+      </div>
     `;
 
     movesContainer.appendChild(div);
