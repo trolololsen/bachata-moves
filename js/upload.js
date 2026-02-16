@@ -1,89 +1,59 @@
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const uploadBtn = document.getElementById("uploadBtn");
-const status = document.getElementById("status");
+document.getElementById("uploadBtn").addEventListener("click", async () => {
 
-const startPositionUpload = document.getElementById("startPositionUpload");
-const endPositionUpload = document.getElementById("endPositionUpload");
+  const status = document.getElementById("status");
 
-const positions = [
-  "open", "closed", "side-by-side", "cross-body", "underarm-turn",
-  "inside-turn", "outside-turn", "cuddle", "shadow", "promenade",
-  "fan", "back-spot", "slot", "line", "tango-close", "hammerlock",
-  "spiral", "wrap", "body-wave", "other"
-];
-
-// Populate positions
-positions.forEach(p => {
-  const o1 = document.createElement("option"); o1.value=p;o1.text=p; startPositionUpload.appendChild(o1);
-  const o2 = document.createElement("option"); o2.value=p;o2.text=p; endPositionUpload.appendChild(o2);
-});
-
-async function checkUser() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if(user){
-    loginBtn.style.display="none"; logoutBtn.style.display="inline-block";
-  } else {
-    loginBtn.style.display="inline-block"; logoutBtn.style.display="none";
-  }
-  return user;
-}
-
-loginBtn.addEventListener("click", async () => {
-  const email = prompt("Enter your email:");
-  if(!email) return;
-  await supabaseClient.auth.signInWithOtp({email});
-  alert("Check your email for login link.");
-});
-
-logoutBtn.addEventListener("click", async ()=>{
-  await supabaseClient.auth.signOut();
-  location.reload();
-});
-
-uploadBtn.addEventListener("click", async ()=>{
-  const user = await checkUser();
-  if(!user){ alert("You must login to upload."); return; }
-
-  const title = document.getElementById("title").value;
+  const name = document.getElementById("name").value.trim();
+  const type = document.getElementById("type").value;
+  const startPosition = document.getElementById("start_position").value;
+  const endPosition = document.getElementById("end_position").value;
+  const difficulty = document.getElementById("difficulty").value;
+  const comment = document.getElementById("comment").value.trim();
   const file = document.getElementById("videoFile").files[0];
-  const type = document.getElementById("moveTypeUpload").value;
-  const difficulty = document.getElementById("difficultyUpload").value;
-  const comment = document.getElementById("commentUpload").value;
-  const start = startPositionUpload.value;
-  const end = endPositionUpload.value;
-  const agree = document.getElementById("copyrightAgree").checked;
 
-  if(!title||!file){status.innerText="Title and file required."; return;}
-  if(!agree){status.innerText="You must confirm upload rights."; return;}
+  if (!name || !type || !startPosition || !endPosition || !difficulty || !file) {
+    status.innerText = "Please fill all required fields and select a video.";
+    return;
+  }
 
-  const fileName = `${Date.now()}_${file.name}`;
+  status.innerText = "Uploading video...";
+
+  const fileName = Date.now() + "-" + file.name.replace(/\s+/g, "_");
 
   const { error: uploadError } = await supabaseClient
-    .storage.from("videos").upload(fileName, file);
+    .storage
+    .from("videos")
+    .upload(fileName, file);
 
-  if(uploadError){status.innerText="Upload failed: "+uploadError.message; return;}
+  if (uploadError) {
+    status.innerText = "Video upload failed: " + uploadError.message;
+    return;
+  }
 
-  const { data: publicUrl } = supabaseClient
-    .storage.from("videos").getPublicUrl(fileName);
+  const { data: publicData } = supabaseClient
+    .storage
+    .from("videos")
+    .getPublicUrl(fileName);
+
+  const videoUrl = publicData.publicUrl;
+
+  status.innerText = "Saving move to database...";
 
   const { error: dbError } = await supabaseClient
-    .from("moves").insert([{
-      name:title,
-      type:type,
-      difficulty:difficulty,
-      comment:comment,
-      start_position:start,
-      end_position:end,
-      video_url:publicUrl.publicUrl,
-      uploader_id:user.id
-    }]);
+    .from("moves")
+    .insert({
+      name: name,
+      type: type,
+      start_position: startPosition,
+      end_position: endPosition,
+      difficulty: difficulty,
+      video_url: videoUrl,
+      comment: comment
+    });
 
-  if(dbError){status.innerText="DB insert failed: "+dbError.message; return;}
+  if (dbError) {
+    status.innerText = "Database error: " + dbError.message;
+    return;
+  }
 
-  status.innerText="Upload successful!";
-  document.getElementById("title").value="";
-  document.getElementById("videoFile").value="";
-  document.getElementById("commentUpload").value="";
-  document.getElementById("copyrightAgree").checked=false;
+  status.innerText = "Move added successfully!";
 });
