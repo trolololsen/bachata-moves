@@ -10,6 +10,7 @@ const embedFields = document.getElementById("embedFields");
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_CLIP_LENGTH_SECONDS = 15;
+const MAX_EMBED_CLIP_LENGTH_SECONDS = 10;
 
 let currentUser = null;
 let currentTier = "basic";
@@ -76,68 +77,71 @@ function parseTimeToSeconds(value) {
   const hours = Number(match[1] || 0);
   const minutes = Number(match[2] || 0);
   const seconds = Number(match[3] || 0);
-
   const total = (hours * 3600) + (minutes * 60) + seconds;
+
   return Number.isFinite(total) && total > 0 ? total : null;
 }
 
-function getYoutubeEmbedUrl(rawUrl, manualStart, manualEnd) {
+function getYoutubeVideoId(rawUrl) {
+  const parsed = new URL(rawUrl);
+  const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+  const path = parsed.pathname;
+
+  if (host === "youtu.be") {
+    return path.replace("/", "").split("/")[0] || "";
+  }
+
+  if (!host.endsWith("youtube.com")) {
+    return "";
+  }
+
+  if (path === "/watch") {
+    return parsed.searchParams.get("v") || "";
+  }
+
+  if (path.startsWith("/shorts/") || path.startsWith("/embed/")) {
+    return path.split("/")[2] || "";
+  }
+
+  return "";
+}
+
+function getStartTimeFromUrl(rawUrl) {
+  const parsed = new URL(rawUrl);
+  const candidate = parsed.searchParams.get("t")
+    || parsed.searchParams.get("start")
+    || "";
+
+  return parseTimeToSeconds(candidate);
+}
+
+function buildYoutubeEmbedClipUrl(videoId, start, clipLengthSeconds) {
+  const embed = new URL(`https://www.youtube.com/embed/${videoId}`);
+  embed.searchParams.set("rel", "0");
+  embed.searchParams.set("start", String(start));
+  embed.searchParams.set("end", String(start + clipLengthSeconds));
+  return embed.toString();
+}
+
+async function validateYoutubeRemotePlayback(rawUrl) {
+  const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(rawUrl)}&format=json`;
+
   try {
-    const parsed = new URL(rawUrl);
-    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
-    const path = parsed.pathname;
+    const response = await fetch(endpoint, { method: "GET" });
 
-    let videoId = "";
-
-    if (host === "youtu.be") {
-      videoId = path.replace("/", "").split("/")[0];
-    } else if (host.endsWith("youtube.com")) {
-      if (path === "/watch") {
-        videoId = parsed.searchParams.get("v") || "";
-      } else if (path.startsWith("/shorts/")) {
-        videoId = path.split("/")[2] || "";
-      } else if (path.startsWith("/embed/")) {
-        videoId = path.split("/")[2] || "";
-      }
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: "This YouTube link is not available for embedding/remote playback. Please choose another timestamp link."
+      };
     }
 
-    if (!videoId) {
-      return { error: "Please provide a valid YouTube video link." };
-    }
-
-    const startFromLink = parseTimeToSeconds(parsed.searchParams.get("t") || "")
-      || parseTimeToSeconds(parsed.searchParams.get("start") || "");
-    const endFromLink = parseTimeToSeconds(parsed.searchParams.get("end") || "");
-
-    const start = Number.isFinite(manualStart) ? manualStart : startFromLink;
-    const end = Number.isFinite(manualEnd) ? manualEnd : endFromLink;
-
-    if (Number.isFinite(start) && start < 0) {
-      return { error: "Start time cannot be negative." };
-    }
-
-    if (Number.isFinite(end) && end <= 0) {
-      return { error: "End time must be greater than zero." };
-    }
-
-    if (Number.isFinite(start) && Number.isFinite(end) && end <= start) {
-      return { error: "End time must be greater than start time." };
-    }
-
-    const embed = new URL(`https://www.youtube.com/embed/${videoId}`);
-    embed.searchParams.set("rel", "0");
-
-    if (Number.isFinite(start)) {
-      embed.searchParams.set("start", String(start));
-    }
-
-    if (Number.isFinite(end)) {
-      embed.searchParams.set("end", String(end));
-    }
-
-    return { embedUrl: embed.toString() };
+    return { ok: true };
   } catch (_error) {
-    return { error: "Invalid URL. Please paste a full YouTube link." };
+    return {
+      ok: false,
+      message: "Could not verify remote playback availability for this YouTube link. Please try again or choose a different link."
+    };
   }
 }
 
@@ -219,8 +223,7 @@ if (uploadBtn) {
     const source = sourceType?.value || "file";
     const file = document.getElementById("videoFile")?.files?.[0];
     const embedUrlInput = document.getElementById("embedUrl")?.value.trim();
-    const embedStart = document.getElementById("embedStart")?.value;
-    const embedEnd = document.getElementById("embedEnd")?.value;
+    const clipLengthInput = document.getElementById("clipLength")?.value;
     const copyrightConfirmed = document.getElementById("copyrightConfirm")?.checked;
 
     if (!name || !type || !startPosition || !endPosition || !difficulty) {
@@ -237,26 +240,48 @@ if (uploadBtn) {
 
     if (source === "embed") {
       if (!embedUrlInput) {
-        setElementText(status, "Please paste a YouTube URL for embedded source.");
+        setElementText(status, "Please paste a YouTube timestamp URL.");
         return;
       }
 
-      const manualStart = embedStart === "" ? null : Number(embedStart);
-      const manualEnd = embedEnd === "" ? null : Number(embedEnd);
+      let videoId = "";
+      let startSeconds = null;
 
-      if ((embedStart !== "" && (!Number.isFinite(manualStart) || manualStart < 0))
-        || (embedEnd !== "" && (!Number.isFinite(manualEnd) || manualEnd <= 0))) {
-        setElementText(status, "Start/end must be valid positive numbers.");
+      try {
+        videoId = getYoutubeVideoId(embedUrlInput);
+        startSeconds = getStartTimeFromUrl(embedUrlInput);
+      } catch (_error) {
+        setElementText(status, "Invalid URL. Please paste a full YouTube timestamp link.");
         return;
       }
 
-      const parsed = getYoutubeEmbedUrl(embedUrlInput, manualStart, manualEnd);
-      if (parsed.error) {
-        setElementText(status, parsed.error);
+      if (!videoId) {
+        setElementText(status, "Please provide a valid YouTube link.");
         return;
       }
 
-      mediaUrl = parsed.embedUrl;
+      if (!Number.isFinite(startSeconds) || startSeconds < 0) {
+        setElementText(status, "Timestamp link required: include a start time (for example `&t=35s`).");
+        return;
+      }
+
+      const clipLengthSeconds = Number(clipLengthInput);
+
+      if (!Number.isInteger(clipLengthSeconds)
+        || clipLengthSeconds < 1
+        || clipLengthSeconds > MAX_EMBED_CLIP_LENGTH_SECONDS) {
+        setElementText(status, "Clip length must be a whole number between 1 and 10 seconds.");
+        return;
+      }
+
+      setElementText(status, "Checking remote playback availability...");
+      const availability = await validateYoutubeRemotePlayback(embedUrlInput);
+      if (!availability.ok) {
+        setElementText(status, availability.message);
+        return;
+      }
+
+      mediaUrl = buildYoutubeEmbedClipUrl(videoId, startSeconds, clipLengthSeconds);
       setElementText(status, "Saving embedded move to database...");
     } else {
       if (!file) {
