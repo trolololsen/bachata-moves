@@ -3,9 +3,14 @@ const uploadFormSection = document.getElementById("uploadFormSection");
 const authUserInfo = document.getElementById("authUserInfo");
 const signOutBtn = document.getElementById("signOutBtn");
 const status = document.getElementById("status");
+const uploadBtn = document.getElementById("uploadBtn");
 
 let currentUser = null;
 let currentTier = "basic";
+
+function setElementText(el, text) {
+  if (el) el.textContent = text;
+}
 
 function normalizeTier(value) {
   const tier = (value || "").toString().toLowerCase();
@@ -47,25 +52,25 @@ async function getUserTier(user) {
 }
 
 function updateAccessUI() {
-  signOutBtn.classList.toggle("hidden", !currentUser);
+  if (signOutBtn) signOutBtn.classList.toggle("hidden", !currentUser);
 
   if (!currentUser) {
-    authUserInfo.textContent = "No active session";
-    uploadAccessMessage.textContent = "Please sign in first. Only Pro users can upload.";
-    uploadFormSection.classList.add("hidden");
+    setElementText(authUserInfo, "No active session");
+    setElementText(uploadAccessMessage, "Please sign in first. Only Pro users can upload.");
+    if (uploadFormSection) uploadFormSection.classList.add("hidden");
     return;
   }
 
-  authUserInfo.textContent = `${currentUser.email} · ${currentTier.toUpperCase()}`;
+  setElementText(authUserInfo, `${currentUser.email} · ${currentTier.toUpperCase()}`);
 
   if (currentTier !== "pro") {
-    uploadAccessMessage.textContent = "Uploads are only available for Pro access.";
-    uploadFormSection.classList.add("hidden");
+    setElementText(uploadAccessMessage, "Uploads are only available for Pro access.");
+    if (uploadFormSection) uploadFormSection.classList.add("hidden");
     return;
   }
 
-  uploadAccessMessage.textContent = "Pro access confirmed. You can upload moves.";
-  uploadFormSection.classList.remove("hidden");
+  setElementText(uploadAccessMessage, "Pro access confirmed. You can upload moves.");
+  if (uploadFormSection) uploadFormSection.classList.remove("hidden");
 }
 
 async function refreshAuthState() {
@@ -75,69 +80,78 @@ async function refreshAuthState() {
   updateAccessUI();
 }
 
-document.getElementById("uploadBtn").addEventListener("click", async () => {
-  if (!currentUser || currentTier !== "pro") {
-    status.innerText = "Upload blocked: Pro access is required.";
-    return;
-  }
+if (uploadBtn) {
+  uploadBtn.addEventListener("click", async () => {
+    if (!currentUser || currentTier !== "pro") {
+      setElementText(status, "Upload blocked: Pro access is required.");
+      return;
+    }
 
-  const name = document.getElementById("name").value.trim();
-  const type = document.getElementById("type").value;
-  const startPosition = document.getElementById("start_position").value;
-  const endPosition = document.getElementById("end_position").value;
-  const difficulty = document.getElementById("difficulty").value;
-  const comment = document.getElementById("comment").value.trim();
-  const file = document.getElementById("videoFile").files[0];
+    const name = document.getElementById("name")?.value.trim();
+    const type = document.getElementById("type")?.value;
+    const startPosition = document.getElementById("start_position")?.value;
+    const endPosition = document.getElementById("end_position")?.value;
+    const difficulty = document.getElementById("difficulty")?.value;
+    const comment = document.getElementById("comment")?.value.trim();
+    const file = document.getElementById("videoFile")?.files?.[0];
 
-  if (!name || !type || !startPosition || !endPosition || !difficulty || !file) {
-    status.innerText = "Please fill all required fields and select a video.";
-    return;
-  }
+    if (!name || !type || !startPosition || !endPosition || !difficulty || !file) {
+      setElementText(status, "Please fill all required fields and select a video.");
+      return;
+    }
 
-  status.innerText = "Uploading video...";
+    setElementText(status, "Uploading video...");
 
-  const fileName = Date.now() + "-" + file.name.replace(/\s+/g, "_");
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
 
-  const { error: uploadError } = await supabaseClient
-    .storage
-    .from("videos")
-    .upload(fileName, file);
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from("videos")
+      .upload(fileName, file);
 
-  if (uploadError) {
-    status.innerText = "Video upload failed: " + uploadError.message;
-@@ -35,25 +114,38 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
-    .getPublicUrl(fileName);
+    if (uploadError) {
+      setElementText(status, `Video upload failed: ${uploadError.message}`);
+      return;
+    }
 
-  const videoUrl = publicData.publicUrl;
+    const { data: publicData } = supabaseClient
+      .storage
+      .from("videos")
+      .getPublicUrl(fileName);
 
-  status.innerText = "Saving move to database...";
+    const videoUrl = publicData.publicUrl;
 
-  const { error: dbError } = await supabaseClient
-    .from("moves")
-    .insert({
-      name: name,
-      type: type,
-      start_position: startPosition,
-      end_position: endPosition,
-      difficulty: difficulty,
-      video_url: videoUrl,
-      comment: comment
-    });
+    setElementText(status, "Saving move to database...");
 
-  if (dbError) {
-    status.innerText = "Database error: " + dbError.message;
-    return;
-  }
+    const { error: dbError } = await supabaseClient
+      .from("moves")
+      .insert({
+        name,
+        type,
+        start_position: startPosition,
+        end_position: endPosition,
+        difficulty,
+        video_url: videoUrl,
+        comment
+      });
 
-  status.innerText = "Move added successfully!";
-});
+    if (dbError) {
+      setElementText(status, `Database error: ${dbError.message}`);
+      return;
+    }
 
-signOutBtn.addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut();
-  if (error) {
-    uploadAccessMessage.textContent = error.message;
-  }
-});
+    setElementText(status, "Move added successfully!");
+  });
+}
+
+if (signOutBtn) {
+  signOutBtn.addEventListener("click", async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+      setElementText(uploadAccessMessage, error.message);
+    }
+  });
+}
 
 supabaseClient.auth.onAuthStateChange(() => {
   refreshAuthState();
