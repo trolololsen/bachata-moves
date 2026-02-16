@@ -86,6 +86,17 @@ populateSelect("filterType", types);
 populateSelect("filterStart", positions);
 populateSelect("filterEnd", positions);
 populateSelect("filterDifficulty", difficulties);
+
+async function loadMoves() {
+function dedupeAddMoveLinks() {
+  const links = document.querySelectorAll('.header-left a[href="upload.html"]');
+  links.forEach((link, index) => {
+    if (index > 0) {
+      link.remove();
+    }
+  });
+}
+
 function getTierFilteredMoves(moves) {
   if (currentTier === "basic") {
     return moves
@@ -93,11 +104,11 @@ function getTierFilteredMoves(moves) {
       .slice(0, BASIC_MAX_MOVES);
   }
 
-async function loadMoves() {
   return moves;
 }
 
 function updateTierUI() {
+  dedupeAddMoveLinks();
   addMoveLink.classList.toggle("hidden", currentTier !== "pro");
 
   if (!currentUser) {
@@ -171,20 +182,20 @@ function renderMoves() {
     .forEach(m => {
     );
 
+      const div = document.createElement("div");
   if (!visibleMoves.length) {
     movesContainer.innerHTML = "<p>No moves match your current filters/access level.</p>";
     return;
   }
-
-      const div = document.createElement("div");
-  visibleMoves.forEach(m => {
-    const div = document.createElement("div");
 
       div.innerHTML = `
         <h3>${m.name}</h3>
         <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
         <video src="${m.video_url}" controls width="300"></video>
       `;
+  visibleMoves.forEach(m => {
+    const div = document.createElement("div");
+
     div.innerHTML = `
       <h3>${m.name}</h3>
       <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
@@ -247,6 +258,7 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
 
 loadMoves();
 (async function init() {
+  dedupeAddMoveLinks();
   await loadMoves();
   const { data } = await supabaseClient.auth.getSession();
   await handleAuthState(data.session);

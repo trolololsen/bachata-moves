@@ -116,6 +116,10 @@ body {
   font-size: 0.9rem;
 }
 
+.access-message:empty {
+  display: none;
+}
+
 /* MAIN */
 
 .container {
@@ -141,7 +145,7 @@ body {
 
 .filter-row label {
   font-size: 0.85rem;
-@@ -152,26 +216,44 @@ body {
+@@ -152,26 +220,44 @@ body {
 }
 
 /* MOBILE */
