@@ -9,12 +9,17 @@ const signOutBtn = document.getElementById("signOutBtn");
 const authStatus = document.getElementById("authStatus");
 const authUserInfo = document.getElementById("authUserInfo");
 
+const myMovesToggle = document.getElementById("filterMyMoves");
+const myFavoritesToggle = document.getElementById("filterFavorites");
+
 const BASIC_VISIBLE_DIFFICULTIES = ["Beginner"];
 const BASIC_MAX_MOVES = 12;
+const PREFERRED_TYPES = ["Move", "Position Change", "Combo", "Styling", "Footwork"];
 
 let currentUser = null;
 let currentTier = "basic";
 let allMoves = [];
+let favoriteMoveIds = new Set();
 
 const positions = [
   "Open", "Closed", "Cross Body", "Side-by-Side", "Shadow",
@@ -23,7 +28,6 @@ const positions = [
   "Headloop", "Pretzel", "Cuddle"
 ];
 
-const types = ["Move", "Entry", "Exit", "Transition", "Combo", "Styling"];
 const difficulties = ["Beginner", "Improver", "Intermediate", "Advanced", "Professional"];
 
 function setElementText(el, text) {
@@ -32,32 +36,56 @@ function setElementText(el, text) {
   }
 }
 
-function ensureMovesContainer() {
-  if (movesContainer) return movesContainer;
-
-  const existing = document.getElementById("movesContainer");
-  if (existing) return existing;
-
-  const container = document.querySelector("main.container") || document.body;
-  const fallback = document.createElement("div");
-  fallback.id = "movesContainer";
-  container.appendChild(fallback);
-  console.warn("#movesContainer was missing and has been created automatically.");
-  return fallback;
-}
-
 function normalizeTier(value) {
   const tier = (value || "").toString().toLowerCase();
 
-  if (["pro", "premium"].includes(tier)) {
-    return "pro";
-  }
-
-  if (["normal", "plus", "standard"].includes(tier)) {
-    return "normal";
-  }
+  if (["pro", "premium"].includes(tier)) return "pro";
+  if (["normal", "plus", "standard"].includes(tier)) return "normal";
 
   return "basic";
+}
+
+function normalizeType(type) {
+  const raw = (type || "").trim();
+  const lower = raw.toLowerCase();
+
+  if (["entry", "exit", "transition"].includes(lower)) {
+    return "Position Change";
+  }
+
+  if (lower === "footwork") return "Footwork";
+  if (lower === "position change") return "Position Change";
+
+  return raw || "Move";
+}
+
+function getFavoritesStorageKey() {
+  return `favorites_${currentUser?.id || "anon"}`;
+}
+
+function loadFavorites() {
+  const raw = localStorage.getItem(getFavoritesStorageKey());
+  try {
+    const ids = JSON.parse(raw || "[]");
+    favoriteMoveIds = new Set(Array.isArray(ids) ? ids : []);
+  } catch {
+    favoriteMoveIds = new Set();
+  }
+}
+
+function saveFavorites() {
+  localStorage.setItem(getFavoritesStorageKey(), JSON.stringify([...favoriteMoveIds]));
+}
+
+function toggleFavorite(moveId) {
+  if (favoriteMoveIds.has(moveId)) {
+    favoriteMoveIds.delete(moveId);
+  } else {
+    favoriteMoveIds.add(moveId);
+  }
+
+  saveFavorites();
+  renderMoves();
 }
 
 async function getUserTier(user) {
@@ -83,9 +111,7 @@ async function getUserTier(user) {
     return "basic";
   }
 
-  if (data?.tier) {
-    return normalizeTier(data.tier);
-  }
+  if (data?.tier) return normalizeTier(data.tier);
 
   return "basic";
 }
@@ -132,6 +158,19 @@ function populateSelect(id, values) {
   });
 }
 
+function populateTypeSelectFromMoves(moves) {
+  const normalizedTypes = new Set(PREFERRED_TYPES);
+
+  moves.forEach(m => normalizedTypes.add(normalizeType(m.type)));
+
+  const ordered = [
+    ...PREFERRED_TYPES,
+    ...[...normalizedTypes].filter(t => !PREFERRED_TYPES.includes(t)).sort()
+  ];
+
+  populateSelect("filterType", ordered);
+}
+
 function dedupeAddMoveLinks() {
   const links = document.querySelectorAll('.header-left a[href="upload.html"]');
   links.forEach((link, index) => {
@@ -142,7 +181,7 @@ function dedupeAddMoveLinks() {
 function getTierFilteredMoves(moves) {
   if (!currentUser || currentTier === "basic") {
     return moves
-      .filter(m => BASIC_VISIBLE_DIFFICULTIES.includes(m.difficulty))
+      .filter(m => m.difficulty === "Beginner")
       .slice(0, BASIC_MAX_MOVES);
   }
 
@@ -156,8 +195,13 @@ function updateTierUI() {
     addMoveLink.classList.toggle("hidden", currentTier !== "pro");
   }
 
+  if (myMovesToggle) {
+    myMovesToggle.disabled = !(currentUser && currentTier === "pro");
+    if (myMovesToggle.disabled) myMovesToggle.checked = false;
+  }
+
   if (!currentUser) {
-    setElementText(accessMessage, "Signed out: thumbnails are blurred and videos are locked. Sign in to unlock playback.");
+    setElementText(accessMessage, "Signed out: preview list shown. Sign in to play videos and unlock your tier content.");
     return;
   }
 
@@ -171,7 +215,7 @@ function updateTierUI() {
     return;
   }
 
-  setElementText(accessMessage, "Pro access: all content and uploads enabled.");
+  setElementText(accessMessage, "Pro access: all content, uploads, and My Moves filter enabled.");
 }
 
 function updateAuthUI() {
@@ -193,7 +237,7 @@ function updateAuthUI() {
 }
 
 async function loadMoves() {
-  const targetContainer = ensureMovesContainer();
+  if (!movesContainer) return;
 
   const { data, error } = await supabaseClient
     .from("moves")
@@ -201,37 +245,53 @@ async function loadMoves() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    targetContainer.innerHTML = `<p>${error.message}</p>`;
+    movesContainer.innerHTML = `<p>${error.message}</p>`;
     return;
   }
 
-  allMoves = data || [];
+  allMoves = (data || []).map(m => ({ ...m, normalized_type: normalizeType(m.type) }));
+  populateTypeSelectFromMoves(allMoves);
   renderMoves();
 }
 
+function moveId(m) {
+  return m.id || `${m.name}-${m.video_url}-${m.created_at}`;
+}
+
+function getUploaderLabel(m) {
+  return m.uploader_email
+    || m.uploaded_by_email
+    || m.created_by_email
+    || m.owner_email
+    || (m.uploader_id ? `User ${String(m.uploader_id).slice(0, 8)}` : "Unknown uploader");
+}
+
 function renderMoves() {
-  const targetContainer = ensureMovesContainer();
+  if (!movesContainer) return;
 
   const search = (document.getElementById("search")?.value || "").toLowerCase();
   const type = document.getElementById("filterType")?.value || "";
   const start = document.getElementById("filterStart")?.value || "";
   const end = document.getElementById("filterEnd")?.value || "";
   const difficulty = document.getElementById("filterDifficulty")?.value || "";
-  const requiresLoginToPlay = !currentUser;
+  const myMovesOnly = Boolean(myMovesToggle?.checked && currentUser && currentTier === "pro");
+  const favoritesOnly = Boolean(myFavoritesToggle?.checked);
 
-  targetContainer.innerHTML = "";
+  movesContainer.innerHTML = "";
 
   const visibleMoves = getTierFilteredMoves(allMoves)
     .filter(m =>
-      (!type || m.type === type) &&
+      (!type || m.normalized_type === type) &&
       (!start || m.start_position === start) &&
       (!end || m.end_position === end) &&
       (!difficulty || m.difficulty === difficulty) &&
+      (!myMovesOnly || m.uploader_id === currentUser.id || m.uploader_email === currentUser.email) &&
+      (!favoritesOnly || favoriteMoveIds.has(moveId(m))) &&
       m.name.toLowerCase().includes(search)
     );
 
   if (!visibleMoves.length) {
-    targetContainer.innerHTML = "<p>No moves match your current filters/access level.</p>";
+    movesContainer.innerHTML = "<p>No moves match your current filters/access level.</p>";
     return;
   }
 
@@ -239,22 +299,38 @@ function renderMoves() {
     const div = document.createElement("div");
     div.className = "move-card";
 
+    const id = moveId(m);
+    const isFavorite = favoriteMoveIds.has(id);
+    const canPlay = Boolean(currentUser);
+
     div.innerHTML = `
       <h3>${m.name}</h3>
-      <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
-      <div class="video-wrap ${requiresLoginToPlay ? "locked" : ""}">
-        <video src="${m.video_url}" ${requiresLoginToPlay ? 'preload="metadata" muted playsinline tabindex="-1"' : 'controls'} width="300"></video>
-        ${requiresLoginToPlay ? '<div class="locked-overlay">Sign in to play</div>' : ""}
+      <p>${m.normalized_type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
+      <p>Uploaded by: ${getUploaderLabel(m)}</p>
+      <div class="video-wrap ${canPlay ? "" : "locked"}">
+        ${canPlay
+          ? `<video src="${m.video_url}" controls width="300" preload="metadata" playsinline></video>`
+          : `<div class="locked-preview">Sign in to play</div>`}
       </div>
+      <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"}>
+        ${isFavorite ? "★ Favorited" : "☆ Favorite"}
+      </button>
     `;
 
-    targetContainer.appendChild(div);
+    movesContainer.appendChild(div);
+  });
+
+  movesContainer.querySelectorAll(".favorite-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      toggleFavorite(btn.dataset.moveId);
+    });
   });
 }
 
 async function handleAuthState(session) {
   currentUser = session?.user || null;
   currentTier = await getUserTier(currentUser);
+  loadFavorites();
   updateAuthUI();
 
   if (currentUser) {
@@ -264,40 +340,37 @@ async function handleAuthState(session) {
   renderMoves();
 }
 
-if (authForm) {
-  authForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setAuthStatus("Signing in...", "info");
+authForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setAuthStatus("Signing in...", "info");
 
-    const { error } = await supabaseClient.auth.signInWithPassword({
-      email: authEmail?.value.trim(),
-      password: authPassword?.value
-    });
-
-    setAuthStatus(error ? mapSignInError(error) : "Signed in successfully.", error ? "error" : "success");
-
-    if (!error) {
-      if (authPassword) authPassword.value = "";
-      const { data } = await supabaseClient.auth.getSession();
-      await handleAuthState(data.session);
-    }
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: authEmail?.value.trim(),
+    password: authPassword?.value
   });
-}
 
-if (signOutBtn) {
-  signOutBtn.addEventListener("click", async () => {
-    const { error } = await supabaseClient.auth.signOut();
-    setAuthStatus(error ? `Sign-out failed: ${error.message}` : "Signed out.", error ? "error" : "info");
-  });
-}
+  setAuthStatus(error ? mapSignInError(error) : "Signed in successfully.", error ? "error" : "success");
+
+  if (!error) {
+    if (authPassword) authPassword.value = "";
+    const { data } = await supabaseClient.auth.getSession();
+    await handleAuthState(data.session);
+  }
+});
+
+signOutBtn?.addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut();
+  setAuthStatus(error ? `Sign-out failed: ${error.message}` : "Signed out.", error ? "error" : "info");
+});
 
 document.getElementById("search")?.addEventListener("input", renderMoves);
 document.getElementById("filterType")?.addEventListener("change", renderMoves);
 document.getElementById("filterStart")?.addEventListener("change", renderMoves);
 document.getElementById("filterEnd")?.addEventListener("change", renderMoves);
 document.getElementById("filterDifficulty")?.addEventListener("change", renderMoves);
+myMovesToggle?.addEventListener("change", renderMoves);
+myFavoritesToggle?.addEventListener("change", renderMoves);
 
-populateSelect("filterType", types);
 populateSelect("filterStart", positions);
 populateSelect("filterEnd", positions);
 populateSelect("filterDifficulty", difficulties);
@@ -308,6 +381,7 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
 
 (async function init() {
   dedupeAddMoveLinks();
+  loadFavorites();
   await loadMoves();
   const { data } = await supabaseClient.auth.getSession();
   await handleAuthState(data.session);

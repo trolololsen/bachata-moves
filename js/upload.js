@@ -26,6 +26,15 @@ function normalizeTier(value) {
   return "basic";
 }
 
+function normalizeType(value) {
+  const type = (value || "").toString().trim().toLowerCase();
+  if (["entry", "exit", "transition", "position change"].includes(type)) return "Position Change";
+  if (type === "footwork") return "Footwork";
+  if (type === "styling") return "Styling";
+  if (type === "combo") return "Combo";
+  return "Move";
+}
+
 async function getUserTier(user) {
   if (!user) return "basic";
 
@@ -88,7 +97,7 @@ if (uploadBtn) {
     }
 
     const name = document.getElementById("name")?.value.trim();
-    const type = document.getElementById("type")?.value;
+    const type = normalizeType(document.getElementById("type")?.value);
     const startPosition = document.getElementById("start_position")?.value;
     const endPosition = document.getElementById("end_position")?.value;
     const difficulty = document.getElementById("difficulty")?.value;
@@ -123,9 +132,24 @@ if (uploadBtn) {
 
     setElementText(status, "Saving move to database...");
 
-    const { error: dbError } = await supabaseClient
+    const payload = {
+      name,
+      type,
+      start_position: startPosition,
+      end_position: endPosition,
+      difficulty,
+      video_url: videoUrl,
+      comment,
+      uploader_id: currentUser?.id,
+      uploader_email: currentUser?.email
+    };
+
+    let { error: dbError } = await supabaseClient
       .from("moves")
-      .insert({
+      .insert(payload);
+
+    if (dbError && (dbError.message || "").toLowerCase().includes("column")) {
+      const fallback = {
         name,
         type,
         start_position: startPosition,
@@ -133,7 +157,12 @@ if (uploadBtn) {
         difficulty,
         video_url: videoUrl,
         comment
-      });
+      };
+
+      ({ error: dbError } = await supabaseClient
+        .from("moves")
+        .insert(fallback));
+    }
 
     if (dbError) {
       setElementText(status, `Database error: ${dbError.message}`);

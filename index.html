@@ -5,11 +5,11 @@
   <title>Move Library</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css?v=20260216d">
+  <link rel="stylesheet" href="styles.css?v=20260216e">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260216d"></script>
-  <script src="js/app.js?v=20260216d" defer></script>
+  <script src="js/config.js?v=20260216e"></script>
+  <script src="js/app.js?v=20260216e" defer></script>
 </head>
 <body>
 
@@ -19,9 +19,7 @@
     <a href="upload.html" class="nav-link" id="addMoveLink">+ Add Move</a>
   </div>
 
-  <div class="header-right stack">
-    <input type="text" id="search" placeholder="Search by name">
-
+  <div class="header-right">
     <div id="authCard" class="auth-card">
       <div id="authUserInfo" class="auth-user-info">Signed out</div>
 
@@ -35,13 +33,16 @@
       <p id="authStatus" class="status-text"></p>
     </div>
   </div>
+
+  <div class="header-search">
+    <input type="text" id="search" placeholder="Search by name">
+  </div>
 </header>
 
 <main class="container">
   <p id="accessMessage" class="access-message"></p>
 
   <div class="filters">
-
     <div class="filter-row">
       <label for="filterType">Type</label>
       <select id="filterType"></select>
@@ -62,4 +63,12 @@
       <select id="filterDifficulty"></select>
     </div>
 
+    <label class="filter-toggle"><input type="checkbox" id="filterMyMoves"> My moves (Pro)</label>
+    <label class="filter-toggle"><input type="checkbox" id="filterFavorites"> My favorites</label>
   </div>
+
+  <div id="movesContainer"></div>
+</main>
+
+</body>
+</html>
