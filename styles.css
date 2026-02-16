@@ -159,7 +159,78 @@ body {
 
 .filter-row label {
   font-size: 0.85rem;
-@@ -152,26 +234,44 @@ body {
+  font-weight: 600;
+}
+
+.filter-row select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.85rem;
+}
+
+/* FORM */
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  width: 110px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.form-row input,
+.form-row select {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+.primary-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  opacity: 0.9;
+}
+
+/* MOVE CARDS */
+
+#movesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+#movesContainer > div {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  width: 280px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+#movesContainer h3 {
+  margin: 0 0 6px 0;
+  font-size: 1rem;
+}
+
+#movesContainer p {
+  margin: 0 0 6px 0;
+  font-size: 0.85rem;
+  color: #555;
 }
 
 /* MOBILE */

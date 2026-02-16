@@ -1,4 +1,3 @@
-document.getElementById("uploadBtn").addEventListener("click", async () => {
 const uploadAccessMessage = document.getElementById("uploadAccessMessage");
 const uploadFormSection = document.getElementById("uploadFormSection");
 const authUserInfo = document.getElementById("authUserInfo");
@@ -59,7 +58,6 @@ function updateAccessUI() {
 
   authUserInfo.textContent = `${currentUser.email} · ${currentTier.toUpperCase()}`;
 
-  const status = document.getElementById("status");
   if (currentTier !== "pro") {
     uploadAccessMessage.textContent = "Uploads are only available for Pro access.";
     uploadFormSection.classList.add("hidden");
@@ -107,7 +105,12 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 
   if (uploadError) {
     status.innerText = "Video upload failed: " + uploadError.message;
-@@ -35,25 +114,38 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
+    return;
+  }
+
+  const { data: publicData } = supabaseClient
+    .storage
+    .from("videos")
     .getPublicUrl(fileName);
 
   const videoUrl = publicData.publicUrl;

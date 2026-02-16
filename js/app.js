@@ -17,18 +17,12 @@ let currentTier = "basic";
 let allMoves = [];
 
 const positions = [
-  "Open","Closed","Cross Body","Side-by-Side","Shadow",
-  "Hammerlock","Double Hand Hold","Single Hand Hold",
-  "Wrap","Reverse Wrap","Sweetheart","Cradle",
-  "Headloop","Pretzel","Cuddle"
   "Open", "Closed", "Cross Body", "Side-by-Side", "Shadow",
   "Hammerlock", "Double Hand Hold", "Single Hand Hold",
   "Wrap", "Reverse Wrap", "Sweetheart", "Cradle",
   "Headloop", "Pretzel", "Cuddle"
 ];
 
-const types = ["Move","Entry","Exit","Transition","Combo","Styling"];
-const difficulties = ["Beginner","Improver","Intermediate","Advanced","Professional"];
 const types = ["Move", "Entry", "Exit", "Transition", "Combo", "Styling"];
 const difficulties = ["Beginner", "Improver", "Intermediate", "Advanced", "Professional"];
 
@@ -96,12 +90,7 @@ function populateSelect(id, values) {
   });
 }
 
-populateSelect("filterType", types);
-populateSelect("filterStart", positions);
-populateSelect("filterEnd", positions);
-populateSelect("filterDifficulty", difficulties);
 
-async function loadMoves() {
 function dedupeAddMoveLinks() {
   const links = document.querySelectorAll('.header-left a[href="upload.html"]');
   links.forEach((link, index) => {
@@ -164,18 +153,15 @@ async function loadMoves() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) return;
   if (error) {
     movesContainer.innerHTML = `<p>${error.message}</p>`;
     return;
   }
 
-  renderMoves(data);
   allMoves = data || [];
   renderMoves();
 }
 
-function renderMoves(moves) {
 function renderMoves() {
   const search = document.getElementById("search").value.toLowerCase();
   const type = document.getElementById("filterType").value;
@@ -185,7 +171,6 @@ function renderMoves() {
 
   movesContainer.innerHTML = "";
 
-  moves
   const visibleMoves = getTierFilteredMoves(allMoves)
     .filter(m =>
       (!type || m.type === type) &&
@@ -193,8 +178,6 @@ function renderMoves() {
       (!end || m.end_position === end) &&
       (!difficulty || m.difficulty === difficulty) &&
       m.name.toLowerCase().includes(search)
-    )
-    .forEach(m => {
     );
 
   if (!visibleMoves.length) {
@@ -202,32 +185,19 @@ function renderMoves() {
     return;
   }
 
-      const div = document.createElement("div");
   visibleMoves.forEach(m => {
     const div = document.createElement("div");
 
-      div.innerHTML = `
-        <h3>${m.name}</h3>
-        <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
-        <video src="${m.video_url}" controls width="300"></video>
-      `;
     div.innerHTML = `
       <h3>${m.name}</h3>
       <p>${m.type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
       <video src="${m.video_url}" controls width="300"></video>
     `;
 
-      movesContainer.appendChild(div);
-    });
     movesContainer.appendChild(div);
   });
 }
 
-document.getElementById("search").addEventListener("input", loadMoves);
-document.getElementById("filterType").addEventListener("change", loadMoves);
-document.getElementById("filterStart").addEventListener("change", loadMoves);
-document.getElementById("filterEnd").addEventListener("change", loadMoves);
-document.getElementById("filterDifficulty").addEventListener("change", loadMoves);
 async function handleAuthState(session) {
   currentUser = session?.user || null;
   currentTier = await getUserTier(currentUser);
@@ -278,7 +248,6 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
   handleAuthState(session);
 });
 
-loadMoves();
 (async function init() {
   dedupeAddMoveLinks();
   await loadMoves();

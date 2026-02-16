@@ -5,12 +5,9 @@
   <title>Add Move</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles.css?v=20260216b">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/upload.js" defer></script>
   <script src="js/config.js?v=20260216b"></script>
   <script src="js/upload.js?v=20260216b" defer></script>
 </head>
@@ -31,28 +28,12 @@
 <main class="container">
   <p id="uploadAccessMessage" class="access-message"></p>
 
-  <div class="form-row">
-    <label for="name">Name</label>
-    <input type="text" id="name">
-  </div>
   <section id="uploadFormSection" class="hidden">
     <div class="form-row">
       <label for="name">Name</label>
       <input type="text" id="name">
     </div>
 
-  <div class="form-row">
-    <label for="type">Type</label>
-    <select id="type">
-      <option value="">Select</option>
-      <option>Move</option>
-      <option>Entry</option>
-      <option>Exit</option>
-      <option>Transition</option>
-      <option>Combo</option>
-      <option>Styling</option>
-    </select>
-  </div>
     <div class="form-row">
       <label for="type">Type</label>
       <select id="type">
@@ -66,27 +47,6 @@
       </select>
     </div>
 
-  <div class="form-row">
-    <label for="start_position">Start</label>
-    <select id="start_position">
-      <option value="">Select</option>
-      <option>Open</option>
-      <option>Closed</option>
-      <option>Cross Body</option>
-      <option>Side-by-Side</option>
-      <option>Shadow</option>
-      <option>Hammerlock</option>
-      <option>Double Hand Hold</option>
-      <option>Single Hand Hold</option>
-      <option>Wrap</option>
-      <option>Reverse Wrap</option>
-      <option>Sweetheart</option>
-      <option>Cradle</option>
-      <option>Headloop</option>
-      <option>Pretzel</option>
-      <option>Cuddle</option>
-    </select>
-  </div>
     <div class="form-row">
       <label for="start_position">Start</label>
       <select id="start_position">
@@ -109,27 +69,6 @@
       </select>
     </div>
 
-  <div class="form-row">
-    <label for="end_position">End</label>
-    <select id="end_position">
-      <option value="">Select</option>
-      <option>Open</option>
-      <option>Closed</option>
-      <option>Cross Body</option>
-      <option>Side-by-Side</option>
-      <option>Shadow</option>
-      <option>Hammerlock</option>
-      <option>Double Hand Hold</option>
-      <option>Single Hand Hold</option>
-      <option>Wrap</option>
-      <option>Reverse Wrap</option>
-      <option>Sweetheart</option>
-      <option>Cradle</option>
-      <option>Headloop</option>
-      <option>Pretzel</option>
-      <option>Cuddle</option>
-    </select>
-  </div>
     <div class="form-row">
       <label for="end_position">End</label>
       <select id="end_position">
@@ -152,17 +91,6 @@
       </select>
     </div>
 
-  <div class="form-row">
-    <label for="difficulty">Difficulty</label>
-    <select id="difficulty">
-      <option value="">Select</option>
-      <option>Beginner</option>
-      <option>Improver</option>
-      <option>Intermediate</option>
-      <option>Advanced</option>
-      <option>Professional</option>
-    </select>
-  </div>
     <div class="form-row">
       <label for="difficulty">Difficulty</label>
       <select id="difficulty">
@@ -175,28 +103,18 @@
       </select>
     </div>
 
-  <div class="form-row">
-    <label for="comment">Comment</label>
-    <input type="text" id="comment">
-  </div>
     <div class="form-row">
       <label for="comment">Comment</label>
       <input type="text" id="comment">
     </div>
 
-  <div class="form-row">
-    <label for="videoFile">Video</label>
-    <input type="file" id="videoFile" accept="video/*">
-  </div>
     <div class="form-row">
       <label for="videoFile">Video</label>
       <input type="file" id="videoFile" accept="video/*">
     </div>
 
-  <button id="uploadBtn" class="primary-btn">Upload Move</button>
     <button id="uploadBtn" class="primary-btn">Upload Move</button>
 
-  <p id="status"></p>
     <p id="status"></p>
   </section>
 
