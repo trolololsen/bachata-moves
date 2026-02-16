@@ -5,11 +5,11 @@
   <title>Add Move</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css?v=20260216f">
+  <link rel="stylesheet" href="styles.css?v=20260216h">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260216f"></script>
-  <script src="js/upload.js?v=20260216f" defer></script>
+  <script src="js/config.js?v=20260216h"></script>
+  <script src="js/upload.js?v=20260216h" defer></script>
 </head>
 <body>
 
@@ -108,13 +108,38 @@
     </div>
 
     <div class="form-row">
+      <label for="sourceType">Source</label>
+      <select id="sourceType">
+        <option value="file">Upload file</option>
+        <option value="embed">Embedded YouTube link</option>
+      </select>
+    </div>
+
+    <div class="form-row" id="videoFileRow">
       <label for="videoFile">Video</label>
       <input type="file" id="videoFile" accept="video/*">
     </div>
 
+    <div id="embedFields" class="hidden">
+      <div class="form-row">
+        <label for="embedUrl">YouTube URL</label>
+        <input type="url" id="embedUrl" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
+      <div class="form-row">
+        <label for="embedStart">Start (sec)</label>
+        <input type="number" id="embedStart" min="0" step="1" placeholder="Optional">
+      </div>
+      <div class="form-row">
+        <label for="embedEnd">End (sec)</label>
+        <input type="number" id="embedEnd" min="0" step="1" placeholder="Optional">
+      </div>
+    </div>
+
+    <p id="fileRules" class="hint-text">File upload limits: 10 MB max and 15 seconds max. Embedded links use YouTube playback and any start/end you provide.</p>
+
 
     <div class="upload-disclaimer">
-      <p><strong>Copyright notice:</strong> By uploading, you confirm you own the rights or have permission to share this video. You are fully responsible for uploaded content.</p>
+      <p><strong>Copyright notice:</strong> By uploading or embedding, you confirm you own the rights or have permission to share this video. Embedding a YouTube link does not transfer copyright ownership. You are fully responsible for uploaded content.</p>
       <label><input type="checkbox" id="copyrightConfirm"> I confirm I have the legal rights to upload this video.</label>
     </div>
 

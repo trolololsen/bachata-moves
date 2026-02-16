@@ -266,6 +266,27 @@ function getUploaderLabel(m) {
     || (m.uploader_id ? `User ${String(m.uploader_id).slice(0, 8)}` : "Unknown uploader");
 }
 
+
+function getMediaMarkup(videoUrl, canPlay) {
+  if (!canPlay) {
+    return '<div class="locked-preview">Sign in to play</div>';
+  }
+
+  const url = (videoUrl || "").trim();
+
+  if (!url) {
+    return '<div class="locked-preview">No video URL</div>';
+  }
+
+  const isEmbeddedYoutube = /^https:\/\/(www\.)?youtube\.com\/embed\//i.test(url);
+
+  if (isEmbeddedYoutube) {
+    return `<iframe src="${url}" title="Embedded move video" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+  }
+
+  return `<video src="${url}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture width="300" preload="metadata" playsinline oncontextmenu="return false;"></video>`;
+}
+
 function renderMoves() {
   if (!movesContainer) return;
 
@@ -309,9 +330,7 @@ function renderMoves() {
       <p class="move-comment">${m.comment || ""}</p>
       <p>Uploaded by: ${getUploaderLabel(m)}</p>
       <div class="video-wrap ${canPlay ? "" : "locked"}">
-        ${canPlay
-          ? `<video src="${m.video_url}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture width="300" preload="metadata" playsinline oncontextmenu="return false;"></video>`
-          : `<div class="locked-preview">Sign in to play</div>`}
+        ${getMediaMarkup(m.video_url, canPlay)}
       </div>
       <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"}>
         ${isFavorite ? "★ Favorited" : "☆ Favorite"}

@@ -200,6 +200,17 @@ body {
   font-size: 0.9rem;
 }
 
+
+.hint-text {
+  margin: -4px 0 14px 110px;
+  font-size: 0.82rem;
+  color: #4b5563;
+}
+
+#embedFields {
+  margin-bottom: 8px;
+}
+
 .primary-btn {
   background: #3b82f6;
   color: white;
@@ -254,6 +265,13 @@ body {
 .video-wrap video {
   display: block;
   width: 100%;
+}
+
+.video-wrap iframe {
+  display: block;
+  width: 100%;
+  min-height: 170px;
+  border: 0;
 }
 
 .video-wrap.locked {
