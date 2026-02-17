@@ -199,7 +199,7 @@ async function createBasicUser() {
     password,
     options: {
       data: { tier: "basic" },
-      emailRedirectTo: `${window.location.origin}/index.html`
+      emailRedirectTo: `${window.location.origin}/verified.html`
     }
   });
 
@@ -214,7 +214,7 @@ async function createBasicUser() {
     await handleAuthState(data.session);
   }
 
-  setAuthStatus("Basic account created. Check your email and confirm via the link to return to this site.", "success");
+  setAuthStatus("Basic account created. Check your email and confirm via the link to open the verification page.", "success");
 }
 
 async function submitFeedback() {
