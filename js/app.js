@@ -6,6 +6,8 @@ const authForm = document.getElementById("authForm");
 const authEmail = document.getElementById("authEmail");
 const authPassword = document.getElementById("authPassword");
 const signOutBtn = document.getElementById("signOutBtn");
+const signUpBtn = document.getElementById("signUpBtn");
+const feedbackBtn = document.getElementById("feedbackBtn");
 const authStatus = document.getElementById("authStatus");
 const authUserInfo = document.getElementById("authUserInfo");
 
@@ -145,6 +147,69 @@ function mapSignInError(error) {
   return `Sign-in failed: ${error?.message || "Unknown error"}`;
 }
 
+async function ensureBasicProfile(user) {
+  if (!user?.id) return;
+
+  await supabaseClient
+    .from("profiles")
+    .upsert({ id: user.id, tier: "basic" }, { onConflict: "id" });
+}
+
+async function createBasicUser() {
+  const email = authEmail?.value.trim();
+  const password = authPassword?.value || "";
+
+  if (!email || !password) {
+    setAuthStatus("Enter email and password to create a basic user.", "error");
+    return;
+  }
+
+  setAuthStatus("Creating basic user...", "info");
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { tier: "basic" }
+    }
+  });
+
+  if (error) {
+    setAuthStatus(`Sign-up failed: ${error.message}`, "error");
+    return;
+  }
+
+  await ensureBasicProfile(data.user);
+
+  if (data.session?.user) {
+    await handleAuthState(data.session);
+  }
+
+  setAuthStatus("Basic account created. Check your email for confirmation if required.", "success");
+}
+
+async function submitFeedback() {
+  const message = prompt("Share feedback (max 1000 chars):");
+  if (message === null) return;
+
+  const trimmed = message.trim();
+  if (!trimmed) {
+    setAuthStatus("Feedback not sent: message was empty.", "error");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("feedback")
+    .insert({
+      message: trimmed.slice(0, 1000),
+      user_id: currentUser?.id || null,
+      user_email: currentUser?.email || null,
+      source: "web"
+    });
+
+  setAuthStatus(error ? `Feedback failed: ${error.message}` : "Thanks! Feedback sent.", error ? "error" : "success");
+}
+
 function populateSelect(id, values) {
   const select = document.getElementById(id);
   if (!select) return;
@@ -223,6 +288,7 @@ function updateAuthUI() {
 
   if (authForm) authForm.classList.toggle("hidden", signedIn);
   if (signOutBtn) signOutBtn.classList.toggle("hidden", !signedIn);
+  if (signUpBtn) signUpBtn.disabled = signedIn;
 
   if (signedIn) {
     setElementText(authUserInfo, `${currentUser.email} · ${currentTier.toUpperCase()}`);
@@ -284,29 +350,13 @@ function canManageMove() {
   return Boolean(currentUser && currentTier === "pro");
 }
 
-async function editMove(move) {
+function editMove(move) {
   if (!move?.id) {
     alert("This move cannot be edited because it is missing an id.");
     return;
   }
 
-  const name = prompt("Edit move name:", move.name || "");
-  if (name === null) return;
-
-  const comment = prompt("Edit comment:", move.comment || "");
-  if (comment === null) return;
-
-  const { error } = await supabaseClient
-    .from("moves")
-    .update({ name: name.trim(), comment: comment.trim() })
-    .eq("id", move.id);
-
-  if (error) {
-    alert(`Update failed: ${error.message}`);
-    return;
-  }
-
-  await loadMoves();
+  window.location.href = `upload.html?edit=${encodeURIComponent(move.id)}`;
 }
 
 async function deleteMove(move) {
@@ -328,7 +378,9 @@ async function deleteMove(move) {
     return;
   }
 
-  await loadMoves();
+  allMoves = allMoves.filter(m => m.id !== move.id);
+  renderMoves();
+  setAuthStatus(`Deleted "${move.name}".`, "success");
 }
 
 function replayMove(moveId) {
@@ -434,8 +486,8 @@ function renderMoves() {
         <button class="small-action-btn replay-btn" data-replay-id="${id}" ${canPlay ? "" : "disabled"}>
           Replay clip
         </button>
-        ${canManageMove() ? `<button class="small-action-btn edit-btn" data-edit-id="${id}">Edit</button>
-        <button class="small-action-btn delete-btn" data-delete-id="${id}">Delete</button>` : ""}
+        ${canManageMove() ? `<button class="small-action-btn edit-btn" data-edit-id="${id}" ${m.id ? "" : "disabled"}>Edit</button>
+        <button class="small-action-btn delete-btn" data-delete-id="${id}" ${m.id ? "" : "disabled"}>Delete</button>` : ""}
       </div>
     `;
 
@@ -455,10 +507,10 @@ function renderMoves() {
   });
 
   movesContainer.querySelectorAll(".edit-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", () => {
       const move = allMoves.find(m => moveId(m) === btn.dataset.editId);
       if (!move) return;
-      await editMove(move);
+      editMove(move);
     });
   });
 
@@ -505,6 +557,14 @@ authForm?.addEventListener("submit", async (event) => {
 signOutBtn?.addEventListener("click", async () => {
   const { error } = await supabaseClient.auth.signOut();
   setAuthStatus(error ? `Sign-out failed: ${error.message}` : "Signed out.", error ? "error" : "info");
+});
+
+signUpBtn?.addEventListener("click", async () => {
+  await createBasicUser();
+});
+
+feedbackBtn?.addEventListener("click", async () => {
+  await submitFeedback();
 });
 
 document.getElementById("search")?.addEventListener("input", renderMoves);

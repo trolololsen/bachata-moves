@@ -1,5 +1,7 @@
 const uploadAccessMessage = document.getElementById("uploadAccessMessage");
 const uploadFormSection = document.getElementById("uploadFormSection");
+const editModeNotice = document.getElementById("editModeNotice");
+const uploadTitle = document.getElementById("uploadTitle");
 const authUserInfo = document.getElementById("authUserInfo");
 const signOutBtn = document.getElementById("signOutBtn");
 const status = document.getElementById("status");
@@ -12,8 +14,11 @@ const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_CLIP_LENGTH_SECONDS = 15;
 const MAX_EMBED_CLIP_LENGTH_SECONDS = 10;
 
+const editMoveId = new URLSearchParams(window.location.search).get("edit");
+
 let currentUser = null;
 let currentTier = "basic";
+let editingMove = null;
 
 function setElementText(el, text) {
   if (el) el.textContent = text;
@@ -21,15 +26,8 @@ function setElementText(el, text) {
 
 function normalizeTier(value) {
   const tier = (value || "").toString().toLowerCase();
-
-  if (["pro", "premium"].includes(tier)) {
-    return "pro";
-  }
-
-  if (["normal", "plus", "standard"].includes(tier)) {
-    return "normal";
-  }
-
+  if (["pro", "premium"].includes(tier)) return "pro";
+  if (["normal", "plus", "standard"].includes(tier)) return "normal";
   return "basic";
 }
 
@@ -40,6 +38,10 @@ function normalizeType(value) {
   if (type === "styling") return "Styling";
   if (type === "combo") return "Combo";
   return "Move";
+}
+
+function isEmbeddedYoutubeUrl(url) {
+  return /^https:\/\/(www\.)?youtube\.com\/embed\//i.test((url || "").trim());
 }
 
 function getVideoDuration(file) {
@@ -66,10 +68,7 @@ function getVideoDuration(file) {
 
 function parseTimeToSeconds(value) {
   if (!value) return null;
-
-  if (/^\d+$/.test(value)) {
-    return Number(value);
-  }
+  if (/^\d+$/.test(value)) return Number(value);
 
   const match = value.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/i);
   if (!match) return null;
@@ -87,31 +86,17 @@ function getYoutubeVideoId(rawUrl) {
   const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
   const path = parsed.pathname;
 
-  if (host === "youtu.be") {
-    return path.replace("/", "").split("/")[0] || "";
-  }
-
-  if (!host.endsWith("youtube.com")) {
-    return "";
-  }
-
-  if (path === "/watch") {
-    return parsed.searchParams.get("v") || "";
-  }
-
-  if (path.startsWith("/shorts/") || path.startsWith("/embed/")) {
-    return path.split("/")[2] || "";
-  }
+  if (host === "youtu.be") return path.replace("/", "").split("/")[0] || "";
+  if (!host.endsWith("youtube.com")) return "";
+  if (path === "/watch") return parsed.searchParams.get("v") || "";
+  if (path.startsWith("/shorts/") || path.startsWith("/embed/")) return path.split("/")[2] || "";
 
   return "";
 }
 
 function getStartTimeFromUrl(rawUrl) {
   const parsed = new URL(rawUrl);
-  const candidate = parsed.searchParams.get("t")
-    || parsed.searchParams.get("start")
-    || "";
-
+  const candidate = parsed.searchParams.get("t") || parsed.searchParams.get("start") || "";
   return parseTimeToSeconds(candidate);
 }
 
@@ -123,12 +108,36 @@ function buildYoutubeEmbedClipUrl(videoId, start, clipLengthSeconds) {
   return embed.toString();
 }
 
+function getTimestampUrlFromEmbed(embedUrl) {
+  try {
+    const parsed = new URL(embedUrl);
+    const videoId = parsed.pathname.split("/").pop() || "";
+    const start = Number(parsed.searchParams.get("start") || "0");
+    if (!videoId) return "";
+    return `https://www.youtube.com/watch?v=${videoId}&t=${Math.max(0, start)}s`;
+  } catch (_error) {
+    return "";
+  }
+}
+
+function getClipLengthFromEmbed(embedUrl) {
+  try {
+    const parsed = new URL(embedUrl);
+    const start = Number(parsed.searchParams.get("start") || "0");
+    const end = Number(parsed.searchParams.get("end") || "0");
+    const length = end - start;
+    if (!Number.isFinite(length) || length <= 0) return 8;
+    return Math.min(MAX_EMBED_CLIP_LENGTH_SECONDS, Math.max(1, Math.round(length)));
+  } catch (_error) {
+    return 8;
+  }
+}
+
 async function validateYoutubeRemotePlayback(rawUrl) {
   const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(rawUrl)}&format=json`;
 
   try {
     const response = await fetch(endpoint, { method: "GET" });
-
     if (!response.ok) {
       return {
         ok: false,
@@ -153,6 +162,48 @@ function updateSourceUI() {
   if (embedFields) embedFields.classList.toggle("hidden", !isEmbed);
 }
 
+function setEditModeUI() {
+  if (!editMoveId) return;
+  setElementText(uploadTitle, "Edit Move");
+  if (uploadBtn) uploadBtn.textContent = "Save Changes";
+  setElementText(editModeNotice, "Edit mode: update all fields, then save.");
+  if (editModeNotice) editModeNotice.classList.remove("hidden");
+}
+
+async function loadMoveForEditing() {
+  if (!editMoveId) return;
+
+  const { data, error } = await supabaseClient
+    .from("moves")
+    .select("*")
+    .eq("id", editMoveId)
+    .maybeSingle();
+
+  if (error || !data) {
+    setElementText(status, error ? `Could not load move: ${error.message}` : "Move not found.");
+    return;
+  }
+
+  editingMove = data;
+
+  document.getElementById("name").value = data.name || "";
+  document.getElementById("type").value = normalizeType(data.type);
+  document.getElementById("start_position").value = data.start_position || "";
+  document.getElementById("end_position").value = data.end_position || "";
+  document.getElementById("difficulty").value = data.difficulty || "";
+  document.getElementById("comment").value = data.comment || "";
+
+  if (isEmbeddedYoutubeUrl(data.video_url || "")) {
+    sourceType.value = "embed";
+    document.getElementById("embedUrl").value = getTimestampUrlFromEmbed(data.video_url);
+    document.getElementById("clipLength").value = String(getClipLengthFromEmbed(data.video_url));
+  } else {
+    sourceType.value = "file";
+  }
+
+  updateSourceUI();
+}
+
 async function getUserTier(user) {
   if (!user) return "basic";
 
@@ -171,9 +222,7 @@ async function getUserTier(user) {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!error && data?.tier) {
-    return normalizeTier(data.tier);
-  }
+  if (!error && data?.tier) return normalizeTier(data.tier);
 
   return "basic";
 }
@@ -205,6 +254,10 @@ async function refreshAuthState() {
   currentUser = data.session?.user || null;
   currentTier = await getUserTier(currentUser);
   updateAccessUI();
+
+  if (currentUser && currentTier === "pro" && editMoveId) {
+    await loadMoveForEditing();
+  }
 }
 
 if (uploadBtn) {
@@ -236,7 +289,7 @@ if (uploadBtn) {
       return;
     }
 
-    let mediaUrl = "";
+    let mediaUrl = editingMove?.video_url || "";
 
     if (source === "embed") {
       if (!embedUrlInput) {
@@ -266,10 +319,7 @@ if (uploadBtn) {
       }
 
       const clipLengthSeconds = Number(clipLengthInput);
-
-      if (!Number.isInteger(clipLengthSeconds)
-        || clipLengthSeconds < 1
-        || clipLengthSeconds > MAX_EMBED_CLIP_LENGTH_SECONDS) {
+      if (!Number.isInteger(clipLengthSeconds) || clipLengthSeconds < 1 || clipLengthSeconds > MAX_EMBED_CLIP_LENGTH_SECONDS) {
         setElementText(status, "Clip length must be a whole number between 1 and 10 seconds.");
         return;
       }
@@ -282,58 +332,66 @@ if (uploadBtn) {
       }
 
       mediaUrl = buildYoutubeEmbedClipUrl(videoId, startSeconds, clipLengthSeconds);
-      setElementText(status, "Saving embedded move to database...");
+      setElementText(status, editMoveId ? "Saving move changes..." : "Saving embedded move to database...");
     } else {
-      if (!file) {
+      if (!file && !editMoveId) {
         setElementText(status, "Please select a video file.");
         return;
       }
 
-      if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-        setElementText(status, "Upload blocked: video file must be 10 MB or smaller.");
+      if (file) {
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+          setElementText(status, "Upload blocked: video file must be 10 MB or smaller.");
+          return;
+        }
+
+        let clipDuration;
+
+        try {
+          clipDuration = await getVideoDuration(file);
+        } catch (error) {
+          setElementText(status, error.message || "Could not validate video length.");
+          return;
+        }
+
+        if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
+          setElementText(status, "Upload blocked: invalid video length.");
+          return;
+        }
+
+        if (clipDuration > MAX_CLIP_LENGTH_SECONDS) {
+          setElementText(status, "Upload blocked: video must be 15 seconds or shorter.");
+          return;
+        }
+
+        setElementText(status, "Uploading video...");
+
+        const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+
+        const { error: uploadError } = await supabaseClient
+          .storage
+          .from("videos")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          setElementText(status, `Video upload failed: ${uploadError.message}`);
+          return;
+        }
+
+        const { data: publicData } = supabaseClient
+          .storage
+          .from("videos")
+          .getPublicUrl(fileName);
+
+        mediaUrl = publicData.publicUrl;
+      }
+
+      if (!mediaUrl) {
+        setElementText(status, "No video source available for this move.");
         return;
       }
 
-      let clipDuration;
-
-      try {
-        clipDuration = await getVideoDuration(file);
-      } catch (error) {
-        setElementText(status, error.message || "Could not validate video length.");
-        return;
-      }
-
-      if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
-        setElementText(status, "Upload blocked: invalid video length.");
-        return;
-      }
-
-      if (clipDuration > MAX_CLIP_LENGTH_SECONDS) {
-        setElementText(status, "Upload blocked: video must be 15 seconds or shorter.");
-        return;
-      }
-
-      setElementText(status, "Uploading video...");
-
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-
-      const { error: uploadError } = await supabaseClient
-        .storage
-        .from("videos")
-        .upload(fileName, file);
-
-      if (uploadError) {
-        setElementText(status, `Video upload failed: ${uploadError.message}`);
-        return;
-      }
-
-      const { data: publicData } = supabaseClient
-        .storage
-        .from("videos")
-        .getPublicUrl(fileName);
-
-      mediaUrl = publicData.publicUrl;
-      setElementText(status, "Saving move to database...");
+      setElementText(status, editMoveId ? "Saving move changes..." : "Saving move to database...");
     }
 
     const payload = {
@@ -347,6 +405,21 @@ if (uploadBtn) {
       uploader_id: currentUser?.id,
       uploader_email: currentUser?.email
     };
+
+    if (editMoveId) {
+      const { error: updateError } = await supabaseClient
+        .from("moves")
+        .update(payload)
+        .eq("id", editMoveId);
+
+      if (updateError) {
+        setElementText(status, `Update failed: ${updateError.message}`);
+        return;
+      }
+
+      setElementText(status, "Move updated successfully!");
+      return;
+    }
 
     let { error: dbError } = await supabaseClient
       .from("moves")
@@ -384,9 +457,7 @@ if (sourceType) {
 if (signOutBtn) {
   signOutBtn.addEventListener("click", async () => {
     const { error } = await supabaseClient.auth.signOut();
-    if (error) {
-      setElementText(uploadAccessMessage, error.message);
-    }
+    if (error) setElementText(uploadAccessMessage, error.message);
   });
 }
 
@@ -394,5 +465,6 @@ supabaseClient.auth.onAuthStateChange(() => {
   refreshAuthState();
 });
 
+setEditModeUI();
 updateSourceUI();
 refreshAuthState();

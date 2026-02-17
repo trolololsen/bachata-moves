@@ -5,17 +5,17 @@
   <title>Add Move</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css?v=20260216j">
+  <link rel="stylesheet" href="styles.css?v=20260216l">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260216j"></script>
-  <script src="js/upload.js?v=20260216j" defer></script>
+  <script src="js/config.js?v=20260216l"></script>
+  <script src="js/upload.js?v=20260216l" defer></script>
 </head>
 <body>
 
 <header class="header">
   <div class="header-left">
-    <h1>Add Move</h1>
+    <h1 id="uploadTitle">Add Move</h1>
     <a href="index.html" class="nav-link secondary">← Back to Library</a>
   </div>
 
@@ -27,6 +27,7 @@
 
 <main class="container">
   <p id="uploadAccessMessage" class="access-message"></p>
+  <p id="editModeNotice" class="access-message hidden"></p>
 
   <section id="uploadFormSection" class="hidden">
     <div class="form-row">

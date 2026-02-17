@@ -5,11 +5,11 @@
   <title>Move Library</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css?v=20260216j">
+  <link rel="stylesheet" href="styles.css?v=20260216l">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260216j"></script>
-  <script src="js/app.js?v=20260216j" defer></script>
+  <script src="js/config.js?v=20260216l"></script>
+  <script src="js/app.js?v=20260216l" defer></script>
 </head>
 <body>
 
@@ -27,9 +27,11 @@
         <input type="email" id="authEmail" placeholder="Email" required>
         <input type="password" id="authPassword" placeholder="Password" required>
         <button type="submit" class="primary-btn small">Sign in</button>
+        <button id="signUpBtn" type="button" class="primary-btn small secondary-btn">Create basic user</button>
       </form>
 
       <button id="signOutBtn" class="primary-btn small secondary-btn hidden" type="button">Sign out</button>
+      <button id="feedbackBtn" class="primary-btn small secondary-btn" type="button">Send feedback</button>
       <p id="authStatus" class="status-text"></p>
     </div>
   </div>
