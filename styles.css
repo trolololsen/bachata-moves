@@ -40,6 +40,7 @@ body {
 .header-search {
   flex-basis: 100%;
   max-width: 420px;
+  width: 100%;
 }
 
 .header-search input {
@@ -84,6 +85,18 @@ body {
   display: flex;
   gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.auth-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.auth-actions .small {
+  padding: 5px 8px;
+  font-size: 0.72rem;
 }
 
 .auth-form input {
@@ -290,7 +303,6 @@ body {
 }
 
 .favorite-btn {
-  margin-top: 8px;
   border: 1px solid #cbd5e1;
   background: #f8fafc;
   color: #334155;
@@ -380,6 +392,18 @@ body {
     order: 3;
     width: 100%;
     max-width: none;
+  }
+
+  .auth-form input {
+    width: calc(50% - 4px);
+  }
+
+  .auth-actions {
+    width: 100%;
+  }
+
+  .auth-actions .small {
+    flex: 1;
   }
 
   .filters {

@@ -32,6 +32,23 @@ const positions = [
 
 const difficulties = ["Beginner", "Improver", "Intermediate", "Advanced", "Professional"];
 
+const SIGNUP_COOLDOWN_MS = 60 * 1000;
+const FEEDBACK_COOLDOWN_MS = 30 * 1000;
+
+function cooldownKey(name) {
+  return `cooldown_${name}`;
+}
+
+function isOnCooldown(name, durationMs) {
+  const nextTs = Number(localStorage.getItem(cooldownKey(name)) || "0");
+  return Date.now() < nextTs + durationMs;
+}
+
+function setCooldown(name) {
+  localStorage.setItem(cooldownKey(name), String(Date.now()));
+}
+
+
 function setElementText(el, text) {
   if (el) {
     el.textContent = text;
@@ -164,6 +181,17 @@ async function createBasicUser() {
     return;
   }
 
+  if (password.length < 8) {
+    setAuthStatus("Use at least 8 characters for password.", "error");
+    return;
+  }
+
+  if (isOnCooldown("signup", SIGNUP_COOLDOWN_MS)) {
+    setAuthStatus("Please wait a minute before creating another account.", "error");
+    return;
+  }
+
+  setCooldown("signup");
   setAuthStatus("Creating basic user...", "info");
 
   const { data, error } = await supabaseClient.auth.signUp({
@@ -189,6 +217,16 @@ async function createBasicUser() {
 }
 
 async function submitFeedback() {
+  if (!currentUser) {
+    setAuthStatus("Please sign in before sending feedback.", "error");
+    return;
+  }
+
+  if (isOnCooldown("feedback", FEEDBACK_COOLDOWN_MS)) {
+    setAuthStatus("Please wait a moment before sending more feedback.", "error");
+    return;
+  }
+
   const message = prompt("Share feedback (max 1000 chars):");
   if (message === null) return;
 
@@ -198,12 +236,14 @@ async function submitFeedback() {
     return;
   }
 
+  setCooldown("feedback");
+
   const { error } = await supabaseClient
     .from("feedback")
     .insert({
       message: trimmed.slice(0, 1000),
-      user_id: currentUser?.id || null,
-      user_email: currentUser?.email || null,
+      user_id: currentUser.id,
+      user_email: currentUser.email || null,
       source: "web"
     });
 
@@ -289,6 +329,7 @@ function updateAuthUI() {
   if (authForm) authForm.classList.toggle("hidden", signedIn);
   if (signOutBtn) signOutBtn.classList.toggle("hidden", !signedIn);
   if (signUpBtn) signUpBtn.disabled = signedIn;
+  if (feedbackBtn) feedbackBtn.classList.toggle("hidden", !signedIn);
 
   if (signedIn) {
     setElementText(authUserInfo, `${currentUser.email} · ${currentTier.toUpperCase()}`);

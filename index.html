@@ -5,11 +5,11 @@
   <title>Move Library</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css?v=20260216l">
+  <link rel="stylesheet" href="styles.css?v=20260216m">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260216l"></script>
-  <script src="js/app.js?v=20260216l" defer></script>
+  <script src="js/config.js?v=20260216m"></script>
+  <script src="js/app.js?v=20260216m" defer></script>
 </head>
 <body>
 
@@ -19,7 +19,7 @@
     <a href="upload.html" class="nav-link" id="addMoveLink">+ Add Move</a>
   </div>
 
-  <div class="header-right">
+  <div class="header-right stack">
     <div id="authCard" class="auth-card">
       <div id="authUserInfo" class="auth-user-info">Signed out</div>
 
@@ -27,17 +27,20 @@
         <input type="email" id="authEmail" placeholder="Email" required>
         <input type="password" id="authPassword" placeholder="Password" required>
         <button type="submit" class="primary-btn small">Sign in</button>
-        <button id="signUpBtn" type="button" class="primary-btn small secondary-btn">Create basic user</button>
       </form>
 
+      <div class="auth-actions">
+        <button id="signUpBtn" type="button" class="primary-btn small secondary-btn">Create basic user</button>
+        <button id="feedbackBtn" class="primary-btn small secondary-btn hidden" type="button">Send feedback</button>
+      </div>
+
       <button id="signOutBtn" class="primary-btn small secondary-btn hidden" type="button">Sign out</button>
-      <button id="feedbackBtn" class="primary-btn small secondary-btn" type="button">Send feedback</button>
       <p id="authStatus" class="status-text"></p>
     </div>
-  </div>
 
-  <div class="header-search">
-    <input type="text" id="search" placeholder="Search by name">
+    <div class="header-search">
+      <input type="text" id="search" placeholder="Search by name">
+    </div>
   </div>
 </header>
 
