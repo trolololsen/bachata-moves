@@ -266,6 +266,101 @@ function getUploaderLabel(m) {
     || (m.uploader_id ? `User ${String(m.uploader_id).slice(0, 8)}` : "Unknown uploader");
 }
 
+function isEmbeddedYoutubeUrl(url) {
+  return /^https:\/\/(www\.)?youtube\.com\/embed\//i.test((url || "").trim());
+}
+
+function getClipStartSecondsFromUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const start = Number(parsed.searchParams.get("start") || "0");
+    return Number.isFinite(start) && start > 0 ? start : 0;
+  } catch (_error) {
+    return 0;
+  }
+}
+
+function canManageMove() {
+  return Boolean(currentUser && currentTier === "pro");
+}
+
+async function editMove(move) {
+  if (!move?.id) {
+    alert("This move cannot be edited because it is missing an id.");
+    return;
+  }
+
+  const name = prompt("Edit move name:", move.name || "");
+  if (name === null) return;
+
+  const comment = prompt("Edit comment:", move.comment || "");
+  if (comment === null) return;
+
+  const { error } = await supabaseClient
+    .from("moves")
+    .update({ name: name.trim(), comment: comment.trim() })
+    .eq("id", move.id);
+
+  if (error) {
+    alert(`Update failed: ${error.message}`);
+    return;
+  }
+
+  await loadMoves();
+}
+
+async function deleteMove(move) {
+  if (!move?.id) {
+    alert("This move cannot be deleted because it is missing an id.");
+    return;
+  }
+
+  const confirmed = confirm(`Delete move "${move.name}"? This cannot be undone.`);
+  if (!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from("moves")
+    .delete()
+    .eq("id", move.id);
+
+  if (error) {
+    alert(`Delete failed: ${error.message}`);
+    return;
+  }
+
+  await loadMoves();
+}
+
+function replayMove(moveId) {
+  const card = movesContainer?.querySelector(`[data-move-id="${moveId}"]`)?.closest(".move-card");
+  if (!card) return;
+
+  const iframe = card.querySelector("iframe");
+  if (iframe) {
+    const currentSrc = iframe.getAttribute("src") || "";
+    const replaySrc = (() => {
+      try {
+        const parsed = new URL(currentSrc);
+        parsed.searchParams.set("autoplay", "1");
+        return parsed.toString();
+      } catch (_error) {
+        return currentSrc;
+      }
+    })();
+
+    iframe.setAttribute("src", "about:blank");
+    requestAnimationFrame(() => iframe.setAttribute("src", replaySrc));
+    return;
+  }
+
+  const video = card.querySelector("video");
+  if (video) {
+    const startSeconds = getClipStartSecondsFromUrl(video.currentSrc || video.src || "");
+    video.currentTime = startSeconds;
+    video.play().catch(() => {});
+  }
+}
+
 
 function getMediaMarkup(videoUrl, canPlay) {
   if (!canPlay) {
@@ -278,7 +373,7 @@ function getMediaMarkup(videoUrl, canPlay) {
     return '<div class="locked-preview">No video URL</div>';
   }
 
-  const isEmbeddedYoutube = /^https:\/\/(www\.)?youtube\.com\/embed\//i.test(url);
+  const isEmbeddedYoutube = isEmbeddedYoutubeUrl(url);
 
   if (isEmbeddedYoutube) {
     return `<iframe src="${url}" title="Embedded move video" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
@@ -332,9 +427,16 @@ function renderMoves() {
       <div class="video-wrap ${canPlay ? "" : "locked"}">
         ${getMediaMarkup(m.video_url, canPlay)}
       </div>
-      <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"}>
-        ${isFavorite ? "★ Favorited" : "☆ Favorite"}
-      </button>
+      <div class="card-actions">
+        <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"}>
+          ${isFavorite ? "★ Favorited" : "☆ Favorite"}
+        </button>
+        <button class="small-action-btn replay-btn" data-replay-id="${id}" ${canPlay ? "" : "disabled"}>
+          Replay clip
+        </button>
+        ${canManageMove() ? `<button class="small-action-btn edit-btn" data-edit-id="${id}">Edit</button>
+        <button class="small-action-btn delete-btn" data-delete-id="${id}">Delete</button>` : ""}
+      </div>
     `;
 
     movesContainer.appendChild(div);
@@ -343,6 +445,28 @@ function renderMoves() {
   movesContainer.querySelectorAll(".favorite-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       toggleFavorite(btn.dataset.moveId);
+    });
+  });
+
+  movesContainer.querySelectorAll(".replay-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      replayMove(btn.dataset.replayId);
+    });
+  });
+
+  movesContainer.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const move = allMoves.find(m => moveId(m) === btn.dataset.editId);
+      if (!move) return;
+      await editMove(move);
+    });
+  });
+
+  movesContainer.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const move = allMoves.find(m => moveId(m) === btn.dataset.deleteId);
+      if (!move) return;
+      await deleteMove(move);
     });
   });
 }
