@@ -172,6 +172,10 @@ async function ensureBasicProfile(user) {
     .upsert({ id: user.id, tier: "basic" }, { onConflict: "id" });
 }
 
+function getVerificationRedirectUrl() {
+  return new URL("verified.html", window.location.href).toString();
+}
+
 async function createBasicUser() {
   const email = authEmail?.value.trim();
   const password = authPassword?.value || "";
@@ -199,7 +203,7 @@ async function createBasicUser() {
     password,
     options: {
       data: { tier: "basic" },
-      emailRedirectTo: `${window.location.origin}/verified.html`
+      emailRedirectTo: getVerificationRedirectUrl()
     }
   });
 
