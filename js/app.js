@@ -328,7 +328,10 @@ function updateAuthUI() {
 
   if (authForm) authForm.classList.toggle("hidden", signedIn);
   if (signOutBtn) signOutBtn.classList.toggle("hidden", !signedIn);
-  if (signUpBtn) signUpBtn.disabled = signedIn;
+  if (signUpBtn) {
+    signUpBtn.disabled = signedIn;
+    signUpBtn.classList.toggle("hidden", signedIn);
+  }
   if (feedbackBtn) feedbackBtn.classList.toggle("hidden", !signedIn);
 
   if (signedIn) {

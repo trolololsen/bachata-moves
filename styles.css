@@ -107,6 +107,10 @@ body {
   font-size: 0.78rem;
 }
 
+.auth-form .small {
+  white-space: nowrap;
+}
+
 .status-text {
   font-size: 0.78rem;
   margin: 6px 0 0;
@@ -394,8 +398,16 @@ body {
     max-width: none;
   }
 
-  .auth-form input {
-    width: calc(50% - 4px);
+  .auth-form {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .auth-form input,
+  .auth-form .small {
+    width: 100%;
   }
 
   .auth-actions {
