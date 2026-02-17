@@ -1,32 +1,65 @@
+
+body {
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
   margin: 0;
   background: #f4f6f9;
+  background: #f4f6f9;
+  color: #222;
   color: #222;
 }
+}
+
+
+/* HEADER */
 
 .header {
+.header {
+  background: #1f2937;
   background: #1f2937;
   color: white;
+  color: white;
+  padding: 15px 20px;
   padding: 15px 20px;
   display: flex;
+  display: flex;
+  justify-content: space-between;
   align-items: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
   flex-wrap: wrap;
   gap: 12px;
 }
+}
+
 
 .header h1 {
+.header h1 {
+  margin: 0;
   margin: 0;
   font-size: 1.4rem;
+  font-size: 1.4rem;
 }
+}
+
 
 .header-left {
+.header-left {
+  display: flex;
   display: flex;
   align-items: center;
+  align-items: center;
+  gap: 15px;
   gap: 15px;
 }
+}
 
+
+.header-right input {
 .header-right {
+  padding: 6px 10px;
   margin-left: auto;
 }
 
@@ -47,27 +80,50 @@ body {
   width: 100%;
   padding: 8px 10px;
   border-radius: 6px;
+  border-radius: 6px;
+  border: none;
   border: none;
   font-size: 0.9rem;
+  font-size: 0.9rem;
 }
+}
+
 
 .nav-link {
+.nav-link {
+  background: #3b82f6;
   background: #3b82f6;
   color: white;
+  color: white;
+  padding: 6px 10px;
   padding: 6px 10px;
   border-radius: 6px;
+  border-radius: 6px;
+  text-decoration: none;
   text-decoration: none;
   font-size: 0.85rem;
+  font-size: 0.85rem;
 }
+}
+
 
 .nav-link.secondary {
+.nav-link.secondary {
+  background: #6b7280;
   background: #6b7280;
 }
-
-.nav-link:hover {
-  opacity: 0.9;
 }
 
+
+.nav-link:hover {
+.nav-link:hover {
+  opacity: 0.9;
+  opacity: 0.9;
+}
+}
+
+
+/* MAIN */
 .auth-card {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -92,6 +148,7 @@ body {
   margin-top: 6px;
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .auth-actions .small {
@@ -109,6 +166,15 @@ body {
 
 .auth-form .small {
   white-space: nowrap;
+}
+
+
+#signOutBtn {
+  margin-top: 6px;
+}
+
+#signOutBtn.hidden {
+  margin-top: 0;
 }
 
 .status-text {
@@ -156,38 +222,73 @@ body {
   display: none;
 }
 
+
+.container {
 .container {
   max-width: 900px;
+  max-width: 1200px;
+  margin: 20px auto;
   margin: 20px auto;
   padding: 0 15px;
+  padding: 0 15px;
+}
 }
 
+
+/* FILTERS */
+
+.filters {
 .filters {
   display: flex;
+  display: flex;
+  flex-wrap: wrap;
   flex-wrap: wrap;
   gap: 12px;
+  gap: 12px;
+  margin-bottom: 20px;
   margin-bottom: 20px;
   align-items: center;
 }
+}
+
 
 .filter-row {
+.filter-row {
+  display: flex;
   display: flex;
   align-items: center;
+  align-items: center;
+  gap: 6px;
   gap: 6px;
 }
+}
+
 
 .filter-row label {
+.filter-row label {
+  font-size: 0.85rem;
   font-size: 0.85rem;
   font-weight: 600;
+  font-weight: 600;
 }
+}
+
 
 .filter-row select {
+.filter-row select {
+  padding: 5px 8px;
   padding: 5px 8px;
   border-radius: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
   border: 1px solid #ccc;
   font-size: 0.85rem;
+  font-size: 0.85rem;
+}
 }
 
+
+/* FORM */
 .filter-toggle {
   font-size: 0.85rem;
   display: flex;
@@ -195,27 +296,50 @@ body {
   gap: 6px;
 }
 
+
+.form-row {
 .form-row {
   display: flex;
+  display: flex;
+  align-items: center;
   align-items: center;
   gap: 10px;
+  gap: 10px;
+  margin-bottom: 12px;
   margin-bottom: 12px;
 }
+}
+
 
 .form-row label {
+.form-row label {
+  width: 110px;
   width: 110px;
   font-weight: 600;
+  font-weight: 600;
   font-size: 0.9rem;
+  font-size: 0.9rem;
+}
 }
 
+
+.form-row input,
 .form-row input,
 .form-row select {
+.form-row select {
+  flex: 1;
   flex: 1;
   padding: 6px 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
   border-radius: 6px;
   border: 1px solid #ccc;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
   font-size: 0.9rem;
 }
+}
+
 
 
 .hint-text {
@@ -229,43 +353,84 @@ body {
 }
 
 .primary-btn {
+.primary-btn {
+  background: #3b82f6;
   background: #3b82f6;
   color: white;
+  color: white;
+  padding: 8px 14px;
   padding: 8px 14px;
   border: none;
+  border: none;
+  border-radius: 6px;
   border-radius: 6px;
   cursor: pointer;
+  cursor: pointer;
 }
+}
+
 
 .primary-btn:hover {
+.primary-btn:hover {
+  opacity: 0.9;
   opacity: 0.9;
 }
+}
+
+
+/* MOVE CARDS */
 
 #movesContainer {
+#movesContainer {
+  display: flex;
   display: flex;
   flex-wrap: wrap;
+  flex-wrap: wrap;
+  gap: 15px;
   gap: 15px;
 }
+}
+
 
 #movesContainer > div {
+#movesContainer > div {
+  background: white;
   background: white;
   border-radius: 8px;
+  border-radius: 8px;
+  padding: 10px;
   padding: 10px;
   width: 280px;
+  width: 280px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
+}
+
 
 #movesContainer h3 {
+#movesContainer h3 {
+  margin: 0 0 6px 0;
   margin: 0 0 6px 0;
   font-size: 1rem;
+  font-size: 1rem;
 }
+}
+
 
 #movesContainer p {
+#movesContainer p {
+  margin: 0 0 6px 0;
   margin: 0 0 6px 0;
   font-size: 0.85rem;
+  font-size: 0.85rem;
+  color: #555;
   color: #555;
 }
+}
 
+
+/* MOBILE */
 .move-comment {
   font-style: italic;
   color: #374151;
@@ -381,6 +546,8 @@ body {
   margin: 0 0 6px 0;
 }
 
+
+@media (max-width: 600px) {
 @media (max-width: 600px) {
   .header-right {
     order: 1;
@@ -416,28 +583,53 @@ body {
 
   .auth-actions .small {
     flex: 1;
-  }
-
-  .filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-row {
-    justify-content: space-between;
-  }
-
-  .form-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .form-row label {
     width: 100%;
   }
 
+  #signOutBtn.small {
+    width: 100%;
+  }
+
+  .filters {
+  .filters {
+    flex-direction: column;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  }
+
+
+  .filter-row {
+  .filter-row {
+    justify-content: space-between;
+    justify-content: space-between;
+  }
+  }
+
+
+  .form-row {
+  .form-row {
+    flex-direction: column;
+    flex-direction: column;
+    align-items: flex-start;
+    align-items: flex-start;
+  }
+  }
+
+
+  .form-row label {
+  .form-row label {
+    width: 100%;
+    width: 100%;
+  }
+  }
+
+
+  #movesContainer {
   #movesContainer {
     justify-content: center;
+    justify-content: center;
+  }
   }
 
   .header-right.stack {
@@ -457,4 +649,5 @@ body {
   .auth-form input {
     width: 100%;
   }
+}
 }

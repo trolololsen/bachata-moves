@@ -198,7 +198,8 @@ async function createBasicUser() {
     email,
     password,
     options: {
-      data: { tier: "basic" }
+      data: { tier: "basic" },
+      emailRedirectTo: `${window.location.origin}/index.html`
     }
   });
 
@@ -213,7 +214,7 @@ async function createBasicUser() {
     await handleAuthState(data.session);
   }
 
-  setAuthStatus("Basic account created. Check your email for confirmation if required.", "success");
+  setAuthStatus("Basic account created. Check your email and confirm via the link to return to this site.", "success");
 }
 
 async function submitFeedback() {
