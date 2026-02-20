@@ -13,10 +13,11 @@ const authUserInfo = document.getElementById("authUserInfo");
 
 const myMovesToggle = document.getElementById("filterMyMoves");
 const myFavoritesToggle = document.getElementById("filterFavorites");
+const privateToggle = document.getElementById("filterPrivate");
 
 const BASIC_VISIBLE_DIFFICULTIES = ["Beginner"];
 const BASIC_MAX_MOVES = 12;
-const PREFERRED_TYPES = ["Move", "Position Change", "Combo", "Styling", "Footwork"];
+const PREFERRED_TYPES = ["Move", "Position Change", "Position Variation", "Combo", "Styling", "Footwork", "Instructions"];
 
 let currentUser = null;
 let currentTier = "basic";
@@ -74,6 +75,8 @@ function normalizeType(type) {
 
   if (lower === "footwork") return "Footwork";
   if (lower === "position change") return "Position Change";
+  if (lower === "position variation") return "Position Variation";
+  if (["instruction", "instructions"].includes(lower)) return "Instructions";
 
   return raw || "Move";
 }
@@ -289,6 +292,12 @@ function dedupeAddMoveLinks() {
 }
 
 function getTierFilteredMoves(moves) {
+  const showPrivate = Boolean(privateToggle?.checked && currentTier === "pro");
+
+  if (!showPrivate) {
+    moves = moves.filter(m => !isPrivateMove(m));
+  }
+
   if (!currentUser || currentTier === "basic") {
     return moves
       .filter(m => m.difficulty === "Beginner")
@@ -308,6 +317,11 @@ function updateTierUI() {
   if (myMovesToggle) {
     myMovesToggle.disabled = !(currentUser && currentTier === "pro");
     if (myMovesToggle.disabled) myMovesToggle.checked = false;
+  }
+
+  if (privateToggle) {
+    privateToggle.disabled = !(currentUser && currentTier === "pro");
+    if (privateToggle.disabled) privateToggle.checked = false;
   }
 
   if (!currentUser) {
@@ -379,6 +393,14 @@ function getUploaderLabel(m) {
     || m.created_by_email
     || m.owner_email
     || (m.uploader_id ? `User ${String(m.uploader_id).slice(0, 8)}` : "Unknown uploader");
+}
+
+function isImageUrl(url) {
+  return /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?|#|$)/i.test((url || "").trim());
+}
+
+function isPrivateMove(move) {
+  return Boolean(move?.is_private);
 }
 
 function isEmbeddedYoutubeUrl(url) {
@@ -474,6 +496,10 @@ function getMediaMarkup(videoUrl, canPlay) {
     return '<div class="locked-preview">No video URL</div>';
   }
 
+  if (isImageUrl(url)) {
+    return `<img src="${url}" alt="Move reference image" loading="lazy">`;
+  }
+
   const isEmbeddedYoutube = isEmbeddedYoutubeUrl(url);
 
   if (isEmbeddedYoutube) {
@@ -493,6 +519,7 @@ function renderMoves() {
   const difficulty = document.getElementById("filterDifficulty")?.value || "";
   const myMovesOnly = Boolean(myMovesToggle?.checked && currentUser && currentTier === "pro");
   const favoritesOnly = Boolean(myFavoritesToggle?.checked);
+  const privateOnly = Boolean(privateToggle?.checked && currentUser && currentTier === "pro");
 
   movesContainer.innerHTML = "";
 
@@ -504,6 +531,7 @@ function renderMoves() {
       (!difficulty || m.difficulty === difficulty) &&
       (!myMovesOnly || m.uploader_id === currentUser.id || m.uploader_email === currentUser.email) &&
       (!favoritesOnly || favoriteMoveIds.has(moveId(m))) &&
+      (!privateOnly || isPrivateMove(m)) &&
       m.name.toLowerCase().includes(search)
     );
 
@@ -519,11 +547,15 @@ function renderMoves() {
     const id = moveId(m);
     const isFavorite = favoriteMoveIds.has(id);
     const canPlay = Boolean(currentUser);
+    const privateClass = isPrivateMove(m) ? " private-move" : "";
+
+    div.className += privateClass;
 
     div.innerHTML = `
-      <h3>${m.name}</h3>
+      <h3>${m.name} ${isPrivateMove(m) ? "<span class=\"private-pill\">🔒 Private</span>" : ""}</h3>
       <p>${m.normalized_type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
       <p class="move-comment">${m.comment || ""}</p>
+      ${isPrivateMove(m) ? "<p><strong>Private (Pro only)</strong></p>" : ""}
       <p>Uploaded by: ${getUploaderLabel(m)}</p>
       <div class="video-wrap ${canPlay ? "" : "locked"}">
         ${getMediaMarkup(m.video_url, canPlay)}
@@ -623,6 +655,7 @@ document.getElementById("filterEnd")?.addEventListener("change", renderMoves);
 document.getElementById("filterDifficulty")?.addEventListener("change", renderMoves);
 myMovesToggle?.addEventListener("change", renderMoves);
 myFavoritesToggle?.addEventListener("change", renderMoves);
+privateToggle?.addEventListener("change", renderMoves);
 
 populateSelect("filterStart", positions);
 populateSelect("filterEnd", positions);

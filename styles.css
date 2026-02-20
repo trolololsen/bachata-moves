@@ -275,6 +275,24 @@ body {
   font-size: 1rem;
 }
 
+
+.private-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b21a8;
+  background: #f3e8ff;
+  border: 1px solid #d8b4fe;
+  vertical-align: middle;
+}
+
+#movesContainer > div.private-move {
+  border: 1px solid #d8b4fe;
+}
+
 #movesContainer p {
   margin: 0 0 6px 0;
   font-size: 0.85rem;
