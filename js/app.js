@@ -292,9 +292,7 @@ function dedupeAddMoveLinks() {
 }
 
 function getTierFilteredMoves(moves) {
-  const showPrivate = Boolean(privateToggle?.checked && currentTier === "pro");
-
-  if (!showPrivate) {
+  if (currentTier !== "pro") {
     moves = moves.filter(m => !isPrivateMove(m));
   }
 
@@ -547,23 +545,24 @@ function renderMoves() {
     const id = moveId(m);
     const isFavorite = favoriteMoveIds.has(id);
     const canPlay = Boolean(currentUser);
-    const privateClass = isPrivateMove(m) ? " private-move" : "";
-
-    div.className += privateClass;
 
     div.innerHTML = `
-      <h3>${m.name} ${isPrivateMove(m) ? "<span class=\"private-pill\">🔒 Private</span>" : ""}</h3>
+      <div class="move-title-row">
+        <h3>${m.name}</h3>
+        <div class="move-badges">
+          ${isPrivateMove(m) ? "<span class=\"private-logo\" title=\"Private move\" aria-label=\"Private move\">🔒</span>" : ""}
+          <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"} title="${isFavorite ? "Remove favorite" : "Add favorite"}" aria-label="${isFavorite ? "Remove favorite" : "Add favorite"}">
+            ${isFavorite ? "★" : "☆"}
+          </button>
+        </div>
+      </div>
       <p>${m.normalized_type} | ${m.start_position} → ${m.end_position} | ${m.difficulty}</p>
       <p class="move-comment">${m.comment || ""}</p>
-      ${isPrivateMove(m) ? "<p><strong>Private (Pro only)</strong></p>" : ""}
       <p>Uploaded by: ${getUploaderLabel(m)}</p>
       <div class="video-wrap ${canPlay ? "" : "locked"}">
         ${getMediaMarkup(m.video_url, canPlay)}
       </div>
       <div class="card-actions">
-        <button class="favorite-btn ${isFavorite ? "active" : ""}" data-move-id="${id}" ${currentUser ? "" : "disabled"}>
-          ${isFavorite ? "★ Favorited" : "☆ Favorite"}
-        </button>
         <button class="small-action-btn replay-btn" data-replay-id="${id}" ${canPlay ? "" : "disabled"}>
           Replay clip
         </button>
