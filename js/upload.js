@@ -228,6 +228,7 @@ async function loadMoveForEditing() {
   document.getElementById("difficulty").value = data.difficulty || "";
   document.getElementById("comment").value = data.comment || "";
   document.getElementById("privateMove").checked = Boolean(data.is_private);
+  document.getElementById("copyrightConfirm").checked = true;
 
   if (isEmbeddedYoutubeUrl(data.video_url || "")) {
     sourceType.value = "embed";
