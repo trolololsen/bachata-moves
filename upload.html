@@ -5,11 +5,11 @@
   <title>Add Move</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css?v=20260216q">
+  <link rel="stylesheet" href="styles.css?v=20260216r">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260216q"></script>
-  <script src="js/upload.js?v=20260216q" defer></script>
+  <script src="js/config.js?v=20260216r"></script>
+  <script src="js/upload.js?v=20260216r" defer></script>
 </head>
 <body>
 
@@ -44,6 +44,8 @@
         <option>Combo</option>
         <option>Styling</option>
         <option>Footwork</option>
+        <option>Instructions</option>
+        <option>Position Variation</option>
       </select>
     </div>
 
@@ -108,10 +110,16 @@
       <input type="text" id="comment">
     </div>
 
+    <div class="form-row checkbox-row">
+      <label for="privateMove">Private</label>
+      <label><input type="checkbox" id="privateMove"> Private move (visible to Pro users only)</label>
+    </div>
+
     <div class="form-row">
       <label for="sourceType">Source</label>
       <select id="sourceType">
-        <option value="file">Upload file</option>
+        <option value="file">Upload video file</option>
+        <option value="image">Upload image (Position Variation)</option>
         <option value="embed">YouTube timestamp link</option>
       </select>
     </div>
@@ -128,11 +136,11 @@
       </div>
       <div class="form-row">
         <label for="clipLength">Clip length (sec)</label>
-        <input type="number" id="clipLength" min="1" max="10" step="1" value="8">
+        <input type="number" id="clipLength" min="1" max="15" step="1" value="10">
       </div>
     </div>
 
-    <p id="fileRules" class="hint-text">File uploads: max 10 MB and 15 seconds. YouTube option: paste a timestamp URL (not the base video URL) and set a clip length up to 10 seconds.</p>
+    <p id="fileRules" class="hint-text">File/image uploads: max 15 MB. Move clips max 15 seconds. Instructions clips max 60 seconds. YouTube option: paste a timestamp URL and set clip length (max 15s, or 60s for Instructions).</p>
 
 
     <div class="upload-disclaimer">

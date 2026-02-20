@@ -10,9 +10,9 @@ const sourceType = document.getElementById("sourceType");
 const videoFileRow = document.getElementById("videoFileRow");
 const embedFields = document.getElementById("embedFields");
 
-const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_CLIP_LENGTH_SECONDS = 15;
-const MAX_EMBED_CLIP_LENGTH_SECONDS = 10;
+const MAX_UPLOAD_SIZE_BYTES = 15 * 1024 * 1024;
+const MAX_STANDARD_CLIP_LENGTH_SECONDS = 15;
+const MAX_INSTRUCTIONS_CLIP_LENGTH_SECONDS = 60;
 
 const editMoveId = new URLSearchParams(window.location.search).get("edit");
 
@@ -37,7 +37,32 @@ function normalizeType(value) {
   if (type === "footwork") return "Footwork";
   if (type === "styling") return "Styling";
   if (type === "combo") return "Combo";
+  if (type === "instructions" || type === "instruction") return "Instructions";
+  if (type === "position variation") return "Position Variation";
   return "Move";
+}
+
+function getMaxClipLengthSeconds(type) {
+  return type === "Instructions" ? MAX_INSTRUCTIONS_CLIP_LENGTH_SECONDS : MAX_STANDARD_CLIP_LENGTH_SECONDS;
+}
+
+function isImageUrl(url) {
+  return /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?|#|$)/i.test((url || "").trim());
+}
+
+function updateClipLengthConstraints() {
+  const type = normalizeType(document.getElementById("type")?.value);
+  const maxLength = getMaxClipLengthSeconds(type);
+  const clipInput = document.getElementById("clipLength");
+  if (!clipInput) return;
+
+  clipInput.max = String(maxLength);
+  const current = Number(clipInput.value || "0");
+  if (!Number.isFinite(current) || current < 1) {
+    clipInput.value = String(Math.min(8, maxLength));
+  } else if (current > maxLength) {
+    clipInput.value = String(maxLength);
+  }
 }
 
 function isEmbeddedYoutubeUrl(url) {
@@ -127,7 +152,7 @@ function getClipLengthFromEmbed(embedUrl) {
     const end = Number(parsed.searchParams.get("end") || "0");
     const length = end - start;
     if (!Number.isFinite(length) || length <= 0) return 8;
-    return Math.min(MAX_EMBED_CLIP_LENGTH_SECONDS, Math.max(1, Math.round(length)));
+    return Math.max(1, Math.round(length));
   } catch (_error) {
     return 8;
   }
@@ -157,9 +182,19 @@ async function validateYoutubeRemotePlayback(rawUrl) {
 function updateSourceUI() {
   const selected = sourceType?.value || "file";
   const isEmbed = selected === "embed";
+  const isImage = selected === "image";
 
-  if (videoFileRow) videoFileRow.classList.toggle("hidden", isEmbed);
+  if (videoFileRow) {
+    videoFileRow.classList.toggle("hidden", isEmbed);
+    const fileInput = document.getElementById("videoFile");
+    const fileLabel = document.querySelector('label[for="videoFile"]');
+
+    if (fileInput) fileInput.accept = isImage ? "image/*" : "video/*";
+    if (fileLabel) fileLabel.textContent = isImage ? "Image" : "Video";
+  }
+
   if (embedFields) embedFields.classList.toggle("hidden", !isEmbed);
+  updateClipLengthConstraints();
 }
 
 function setEditModeUI() {
@@ -192,11 +227,14 @@ async function loadMoveForEditing() {
   document.getElementById("end_position").value = data.end_position || "";
   document.getElementById("difficulty").value = data.difficulty || "";
   document.getElementById("comment").value = data.comment || "";
+  document.getElementById("privateMove").checked = Boolean(data.is_private);
 
   if (isEmbeddedYoutubeUrl(data.video_url || "")) {
     sourceType.value = "embed";
     document.getElementById("embedUrl").value = getTimestampUrlFromEmbed(data.video_url);
     document.getElementById("clipLength").value = String(getClipLengthFromEmbed(data.video_url));
+  } else if (isImageUrl(data.video_url || "")) {
+    sourceType.value = "image";
   } else {
     sourceType.value = "file";
   }
@@ -273,6 +311,7 @@ if (uploadBtn) {
     const endPosition = document.getElementById("end_position")?.value;
     const difficulty = document.getElementById("difficulty")?.value;
     const comment = document.getElementById("comment")?.value.trim();
+    const isPrivate = Boolean(document.getElementById("privateMove")?.checked);
     const source = sourceType?.value || "file";
     const file = document.getElementById("videoFile")?.files?.[0];
     const embedUrlInput = document.getElementById("embedUrl")?.value.trim();
@@ -289,7 +328,14 @@ if (uploadBtn) {
       return;
     }
 
+    const maxClipLengthSeconds = getMaxClipLengthSeconds(type);
+
     let mediaUrl = editingMove?.video_url || "";
+    if (type === "Position Variation" && source !== "image") {
+      setElementText(status, "Position Variation entries must use image upload source.");
+      return;
+    }
+
 
     if (source === "embed") {
       if (!embedUrlInput) {
@@ -319,8 +365,8 @@ if (uploadBtn) {
       }
 
       const clipLengthSeconds = Number(clipLengthInput);
-      if (!Number.isInteger(clipLengthSeconds) || clipLengthSeconds < 1 || clipLengthSeconds > MAX_EMBED_CLIP_LENGTH_SECONDS) {
-        setElementText(status, "Clip length must be a whole number between 1 and 10 seconds.");
+      if (!Number.isInteger(clipLengthSeconds) || clipLengthSeconds < 1 || clipLengthSeconds > maxClipLengthSeconds) {
+        setElementText(status, `Clip length must be a whole number between 1 and ${maxClipLengthSeconds} seconds.`);
         return;
       }
 
@@ -335,36 +381,38 @@ if (uploadBtn) {
       setElementText(status, editMoveId ? "Saving move changes..." : "Saving embedded move to database...");
     } else {
       if (!file && !editMoveId) {
-        setElementText(status, "Please select a video file.");
+        setElementText(status, source === "image" ? "Please select an image file." : "Please select a video file.");
         return;
       }
 
       if (file) {
         if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-          setElementText(status, "Upload blocked: video file must be 10 MB or smaller.");
+          setElementText(status, "Upload blocked: file must be 15 MB or smaller.");
           return;
         }
 
-        let clipDuration;
+        if (source !== "image") {
+          let clipDuration;
 
-        try {
-          clipDuration = await getVideoDuration(file);
-        } catch (error) {
-          setElementText(status, error.message || "Could not validate video length.");
-          return;
+          try {
+            clipDuration = await getVideoDuration(file);
+          } catch (error) {
+            setElementText(status, error.message || "Could not validate video length.");
+            return;
+          }
+
+          if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
+            setElementText(status, "Upload blocked: invalid video length.");
+            return;
+          }
+
+          if (clipDuration > maxClipLengthSeconds) {
+            setElementText(status, `Upload blocked: ${type} must be ${maxClipLengthSeconds} seconds or shorter.`);
+            return;
+          }
         }
 
-        if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
-          setElementText(status, "Upload blocked: invalid video length.");
-          return;
-        }
-
-        if (clipDuration > MAX_CLIP_LENGTH_SECONDS) {
-          setElementText(status, "Upload blocked: video must be 15 seconds or shorter.");
-          return;
-        }
-
-        setElementText(status, "Uploading video...");
+        setElementText(status, source === "image" ? "Uploading image..." : "Uploading video...");
 
         const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
 
@@ -402,6 +450,7 @@ if (uploadBtn) {
       difficulty,
       video_url: mediaUrl,
       comment,
+      is_private: isPrivate,
       uploader_id: currentUser?.id,
       uploader_email: currentUser?.email
     };
@@ -454,6 +503,8 @@ if (sourceType) {
   sourceType.addEventListener("change", updateSourceUI);
 }
 
+document.getElementById("type")?.addEventListener("change", updateClipLengthConstraints);
+
 if (signOutBtn) {
   signOutBtn.addEventListener("click", async () => {
     const { error } = await supabaseClient.auth.signOut();
@@ -467,4 +518,5 @@ supabaseClient.auth.onAuthStateChange(() => {
 
 setEditModeUI();
 updateSourceUI();
+updateClipLengthConstraints();
 refreshAuthState();
